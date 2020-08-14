@@ -3,11 +3,20 @@ use Mix.Config
 # Configure your database
 config :board_games, BoardGames.Repo,
   username: "postgres",
-  password: "postgres",
+  password: "secret",
   database: "board_games_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
+
+config :board_games, BoardGames.EventStore,
+  column_data_type: "jsonb",
+  serializer: EventStore.JsonbSerializer,
+  types: EventStore.PostgresTypes,
+  username: "postgres",
+  password: "secret",
+  database: "board_games_dev_event_store",
+  hostname: "localhost"
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
