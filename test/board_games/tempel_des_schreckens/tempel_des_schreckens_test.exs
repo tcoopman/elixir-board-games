@@ -1,6 +1,6 @@
 defmodule BoardGames.TempelDesSchreckensTest do
   use BoardGames.InMemoryEventStoreCase
-  use BoardGames.AggregateCase, aggregate: BoardGames.Game, async: true
+  use BoardGames.AggregateCase, aggregate: BoardGames.TempelDesSchreckens, async: true
 
   import Commanded.Assertions.EventAssertions
 

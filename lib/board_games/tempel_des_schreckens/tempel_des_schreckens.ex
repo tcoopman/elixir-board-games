@@ -1,4 +1,4 @@
-defmodule BoardGames.Game do
+defmodule BoardGames.TempelDesSchreckens do
   use TypedStruct
 
   alias __MODULE__
@@ -24,22 +24,22 @@ defmodule BoardGames.Game do
   def execute(game, %BoardGames.Command.TempelDesSchreckens.JoinGame{player_id: player_id}),
     do: join_game(game, player_id)
 
-  @spec apply(BoardGames.Game.t(), BoardGames.Event.TempelDesSchreckens.GameCreated.t()) ::
-          BoardGames.Game.t()
-  def apply(%Game{} = game, %BoardGames.Event.TempelDesSchreckens.GameCreated{
+  @spec apply(BoardGames.TempelDesSchreckens.t(), BoardGames.Event.TempelDesSchreckens.GameCreated.t()) ::
+          BoardGames.TempelDesSchreckens.t()
+  def apply(%TempelDesSchreckens{} = game, %BoardGames.Event.TempelDesSchreckens.GameCreated{
         game_id: game_id,
         name: name
       }) do
     %{game | game_id: game_id, name: name}
   end
 
-  def apply(%Game{} = game, %BoardGames.Event.TempelDesSchreckens.JoinedGame{
+  def apply(%TempelDesSchreckens{} = game, %BoardGames.Event.TempelDesSchreckens.JoinedGame{
         player_id: player_id
       }) do
     %{game | players: [player_id]}
   end
 
-  defp create_game(%Game{players: []}, id, name) when is_non_empty_string?(name) do
+  defp create_game(%TempelDesSchreckens{players: []}, id, name) when is_non_empty_string?(name) do
     %BoardGames.Event.TempelDesSchreckens.GameCreated{
       game_id: id,
       name: name
@@ -48,7 +48,7 @@ defmodule BoardGames.Game do
 
   defp create_game(_, _, _), do: {:error, :invalid_name}
 
-  defp join_game(%Game{game_id: game_id} = game, player_id) when is_non_empty_string?(game_id) do
+  defp join_game(%TempelDesSchreckens{game_id: game_id} = game, player_id) when is_non_empty_string?(game_id) do
     %BoardGames.Event.TempelDesSchreckens.JoinedGame{
       game_id: game.game_id,
       player_id: player_id
