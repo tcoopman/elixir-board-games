@@ -1,4 +1,4 @@
-defmodule BoardGames.Event.TempelDesSchreckens.GameCreated do
+defmodule BoardGames.TempelDesSchreckens.Event.GameCreated do
   use TypedStruct
 
   @derive Jason.Encoder

@@ -6,24 +6,24 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
   test "Create a new game" do
     :ok =
-      BoardGames.App.dispatch(%BoardGames.Command.TempelDesSchreckens.CreateGame{
+      BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.CreateGame{
         player_id: "player_id",
         game_id: "game_id",
         name: "the game name",
       })
 
-    assert_receive_event(BoardGames.App, BoardGames.Event.TempelDesSchreckens.GameCreated, fn event ->
+    assert_receive_event(BoardGames.App, BoardGames.TempelDesSchreckens.Event.GameCreated, fn event ->
       assert event.game_id == "game_id"
       assert event.name == "the game name"
     end)
-    assert_receive_event(BoardGames.App, BoardGames.Event.TempelDesSchreckens.JoinedGame, fn event ->
+    assert_receive_event(BoardGames.App, BoardGames.TempelDesSchreckens.Event.JoinedGame, fn event ->
       assert event.game_id == "game_id"
       assert event.player_id == "player_id"
     end)
   end
 
   test "Try to create a game with an empty name" do
-    command = %BoardGames.Command.TempelDesSchreckens.CreateGame{
+    command = %BoardGames.TempelDesSchreckens.Command.CreateGame{
         player_id: "player_id",
         game_id: "game_id",
         name: "",
@@ -34,7 +34,7 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
   describe "Join a game" do
     test "that is not yet created" do
-    command = %BoardGames.Command.TempelDesSchreckens.JoinGame{
+    command = %BoardGames.TempelDesSchreckens.Command.JoinGame{
         player_id: "player_id",
         game_id: "game_id",
       }

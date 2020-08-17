@@ -1,4 +1,4 @@
-defmodule BoardGames.Command.TempelDesSchreckens.JoinGame do
+defmodule BoardGames.TempelDesSchreckens.Command.JoinGame do
   use TypedStruct
 
   typedstruct enforce: true do
