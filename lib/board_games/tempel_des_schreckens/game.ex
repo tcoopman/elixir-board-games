@@ -6,34 +6,54 @@ defmodule BoardGames.Game do
   typedstruct do
     field :game_id, String.t()
     field :players, list(String.t()), default: []
+    field :name, String.t()
   end
 
-  defguard has_valid_name?(name) when is_binary(name) and name != ""
+  defguard is_non_empty_string?(str) when is_binary(str) and str != ""
 
-  @spec execute(BoardGames.Game.t(), BoardGames.Command.TempelDesSchreckens.CreateGame.t()) ::
-          {:error, :invalid_name} | BoardGames.Event.TempelDesSchreckens.GameCreated.t()
   def execute(
-        %Game{players: []},
-        %BoardGames.Command.TempelDesSchreckens.CreateGame{name: name} = create_game
-      )
-      when has_valid_name?(name) do
-    %BoardGames.Event.TempelDesSchreckens.GameCreated{
-      player_id: create_game.player_id,
-      game_id: create_game.game_id,
-      name: create_game.name
-    }
+        game,
+        %BoardGames.Command.TempelDesSchreckens.CreateGame{} = command
+      ) do
+    game
+    |> Commanded.Aggregate.Multi.new()
+    |> Commanded.Aggregate.Multi.execute(&create_game(&1, command.game_id, command.name))
+    |> Commanded.Aggregate.Multi.execute(&join_game(&1, command.player_id))
   end
 
-  def execute(%Game{players: []}, %BoardGames.Command.TempelDesSchreckens.CreateGame{}) do
-    {:error, :invalid_name}
-  end
+  def execute(game, %BoardGames.Command.TempelDesSchreckens.JoinGame{player_id: player_id}),
+    do: join_game(game, player_id)
 
   @spec apply(BoardGames.Game.t(), BoardGames.Event.TempelDesSchreckens.GameCreated.t()) ::
           BoardGames.Game.t()
   def apply(%Game{} = game, %BoardGames.Event.TempelDesSchreckens.GameCreated{
         game_id: game_id,
+        name: name
+      }) do
+    %{game | game_id: game_id, name: name}
+  end
+
+  def apply(%Game{} = game, %BoardGames.Event.TempelDesSchreckens.JoinedGame{
         player_id: player_id
       }) do
-    %{game | players: [player_id], game_id: game_id}
+    %{game | players: [player_id]}
   end
+
+  defp create_game(%Game{players: []}, id, name) when is_non_empty_string?(name) do
+    %BoardGames.Event.TempelDesSchreckens.GameCreated{
+      game_id: id,
+      name: name
+    }
+  end
+
+  defp create_game(_, _, _), do: {:error, :invalid_name}
+
+  defp join_game(%Game{game_id: game_id} = game, player_id) when is_non_empty_string?(game_id) do
+    %BoardGames.Event.TempelDesSchreckens.JoinedGame{
+      game_id: game.game_id,
+      player_id: player_id
+    }
+  end
+
+  defp join_game(_, _), do: {:error, :game_is_not_in_progress}
 end

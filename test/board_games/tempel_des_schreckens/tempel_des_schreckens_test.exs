@@ -14,8 +14,11 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
     assert_receive_event(BoardGames.App, BoardGames.Event.TempelDesSchreckens.GameCreated, fn event ->
       assert event.game_id == "game_id"
-      assert event.player_id == "player_id"
       assert event.name == "the game name"
+    end)
+    assert_receive_event(BoardGames.App, BoardGames.Event.TempelDesSchreckens.JoinedGame, fn event ->
+      assert event.game_id == "game_id"
+      assert event.player_id == "player_id"
     end)
   end
 
@@ -29,5 +32,14 @@ defmodule BoardGames.TempelDesSchreckensTest do
     assert_error(command, {:error, :invalid_name})
   end
 
+  describe "Join a game" do
+    test "that is not yet created" do
+    command = %BoardGames.Command.TempelDesSchreckens.JoinGame{
+        player_id: "player_id",
+        game_id: "game_id",
+      }
 
+    assert_error(command, {:error, :game_is_not_in_progress})
+    end
+  end
 end
