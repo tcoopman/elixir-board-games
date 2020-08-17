@@ -25,6 +25,14 @@ defmodule BoardGames.AggregateCase do
         assert actual_events == expected_events
       end
 
+      defp assert_expectation(initial_events, commands, expectation) do
+        assert {:ok, state, events} = aggregate_run(initial_events, commands)
+
+        actual_events = List.wrap(events)
+
+        assert expectation.(state, actual_events)
+      end
+
       # Assert that the aggregate will have the expected_state after the given commands have been executed
       defp assert_state(commands, expected_state) do
         assert_state([], commands, expected_state)

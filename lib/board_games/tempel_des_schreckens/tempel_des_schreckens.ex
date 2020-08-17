@@ -1,12 +1,16 @@
 defmodule BoardGames.TempelDesSchreckens do
   use TypedStruct
+  use Magritte
 
   alias __MODULE__
+
+  @type role :: :adventurer | :guardian
 
   typedstruct do
     field :game_id, String.t()
     field :players, list(String.t()), default: []
     field :name, String.t()
+    field :roles, list({String.t(), role()})
   end
 
   defguard is_non_empty_string?(str) when is_binary(str) and str != ""
@@ -23,6 +27,16 @@ defmodule BoardGames.TempelDesSchreckens do
 
   def execute(game, %BoardGames.TempelDesSchreckens.Command.JoinGame{player_id: player_id}),
     do: join_game(game, player_id)
+
+  def execute(game, %BoardGames.TempelDesSchreckens.Command.StartGame{}) do
+    game
+    |> Commanded.Aggregate.Multi.new()
+    |> Commanded.Aggregate.Multi.execute(&start_game(&1))
+    |> Commanded.Aggregate.Multi.execute(&deal_roles(&1))
+    |> Commanded.Aggregate.Multi.execute(&give_key(&1))
+    |> Commanded.Aggregate.Multi.execute(&start_round(&1))
+    |> Commanded.Aggregate.Multi.execute(&deal_rooms(&1))
+  end
 
   @spec apply(
           BoardGames.TempelDesSchreckens.t(),
@@ -43,6 +57,28 @@ defmodule BoardGames.TempelDesSchreckens do
         }
       ) do
     %{game | players: [player_id | players]}
+  end
+
+  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.GameStarted{}) do
+    game
+  end
+
+  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.RolesDealt{
+        roles: roles
+      }) do
+    %{game | roles: roles}
+  end
+
+  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.ReceivedKey{}) do
+    game
+  end
+
+  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.RoomsDealt{}) do
+    game
+  end
+
+  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.RoundStarted{}) do
+    game
   end
 
   defp create_game(%TempelDesSchreckens{}, _, name) when not is_non_empty_string?(name),
@@ -68,5 +104,80 @@ defmodule BoardGames.TempelDesSchreckens do
       game_id: game.game_id,
       player_id: player_id
     }
+  end
+
+  defp start_game(%TempelDesSchreckens{players: players}) when length(players) < 3,
+    do: {:error, :not_enough_players_joined}
+
+  defp start_game(%TempelDesSchreckens{} = game) do
+    %BoardGames.TempelDesSchreckens.Event.GameStarted{game_id: game.game_id}
+  end
+
+  defp deal_roles(%TempelDesSchreckens{players: players} = game) do
+    nb_of_players = Enum.count(players)
+
+    {nb_of_adventures, nb_of_guardians} =
+      case nb_of_players do
+        3 -> {2, 2}
+        4 -> {3, 2}
+        5 -> {3, 2}
+        6 -> {4, 2}
+        7 -> {5, 3}
+        8 -> {6, 3}
+        9 -> {6, 3}
+        10 -> {7, 4}
+      end
+
+    adventures = for _ <- 1..nb_of_adventures, do: :adventurer
+    guardians = for _ <- 1..nb_of_guardians, do: :guardian
+    initial_cards = adventures ++ guardians
+
+    roles =
+      initial_cards
+      |> Enum.take_random(nb_of_players)
+      |> Enum.zip(players, ...)
+
+    %BoardGames.TempelDesSchreckens.Event.RolesDealt{game_id: game.game_id, roles: roles}
+  end
+
+  defp give_key(%TempelDesSchreckens{players: players} = game) do
+    player_with_key = players |> Enum.reverse() |> hd()
+
+    %BoardGames.TempelDesSchreckens.Event.ReceivedKey{
+      game_id: game.game_id,
+      player_id: player_with_key
+    }
+  end
+
+  defp start_round(%TempelDesSchreckens{} = game) do
+    %BoardGames.TempelDesSchreckens.Event.RoundStarted{game_id: game.game_id}
+  end
+
+  defp deal_rooms(%TempelDesSchreckens{players: players} = game) do
+    nb_of_players = Enum.count(players)
+
+    {nb_of_treasures, nb_of_traps} = case nb_of_players do
+      3 -> {5, 2}
+      4 -> {6, 2}
+      5 -> {7, 2}
+      6 -> {8, 2}
+      7 -> {7, 2}
+      8 -> {8, 2}
+      9 -> {9, 2}
+      10 -> {10, 3}
+    end
+
+    treasures = for _ <- 1..nb_of_treasures, do: :treasure
+    traps = for _ <- 1..nb_of_traps, do: :trap
+    empty = for _ <- 1..(nb_of_players*5 - nb_of_traps - nb_of_treasures), do: :empty
+    initial_cards = traps ++ treasures ++ empty
+
+    rooms = initial_cards |> Enum.shuffle() |> Enum.chunk_every(5)
+
+    rooms =
+      rooms
+      |> Enum.zip(players, ...)
+
+    %BoardGames.TempelDesSchreckens.Event.RoomsDealt{game_id: game.game_id, rooms: rooms}
   end
 end

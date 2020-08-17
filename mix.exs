@@ -50,7 +50,8 @@ defmodule BoardGames.MixProject do
       {:commanded, "~> 1.1"},
       {:commanded_eventstore_adapter, "~> 1.1"},
       {:eventstore, "~> 1.1"},
-      {:typed_struct, "~> 0.2.1"}
+      {:typed_struct, "~> 0.2.1"},
+      {:magritte, "~> 0.1.0"}
     ]
   end
 
