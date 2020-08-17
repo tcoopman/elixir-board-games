@@ -3,16 +3,28 @@ defmodule BoardGames.Game do
 
   alias __MODULE__
 
-  typedstruct enforce: true do
+  typedstruct do
     field :game_id, String.t()
     field :players, list(String.t()), default: []
   end
 
-  def execute(%Game{players: []}, %BoardGames.Command.JoinGame{} = join_game) do
-    %BoardGames.Event.JoinedGame{player_id: join_game.player_id, game_id: join_game.game_id}
+  @spec execute(BoardGames.Game.t(), BoardGames.Command.CreateGame.t()) ::
+          {:error, :unknown_game_type} | BoardGames.Event.GameCreated.t()
+  def execute(%Game{players: []}, %BoardGames.Command.CreateGame{game_type: :tempel_des_schreckens} = create_game) do
+    %BoardGames.Event.GameCreated{
+      player_id: create_game.player_id,
+      game_id: create_game.game_id,
+      name: create_game.name,
+      game_type: create_game.game_type
+    }
   end
 
-  def apply(%Game{} = game, %BoardGames.Event.JoinedGame{game_id: game_id, player_id: player_id}) do
+  def execute(%Game{players: []}, %BoardGames.Command.CreateGame{}) do
+    {:error, :unknown_game_type}
+  end
+
+  @spec apply(BoardGames.Game.t(), BoardGames.Event.GameCreated.t()) :: BoardGames.Game.t()
+  def apply(%Game{} = game, %BoardGames.Event.GameCreated{game_id: game_id, player_id: player_id}) do
     %{game | players: [player_id], game_id: game_id}
   end
 end

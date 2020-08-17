@@ -1,6 +1,6 @@
 defmodule BoardGames.Router do
   use Commanded.Commands.Router
 
-  dispatch BoardGames.Command.JoinGame, to: BoardGames.Game, identity: :game_id
+  dispatch BoardGames.Command.CreateGame, to: BoardGames.Game, identity: :game_id
 
 end
