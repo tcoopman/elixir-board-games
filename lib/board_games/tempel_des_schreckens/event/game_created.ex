@@ -1,7 +1,5 @@
-defmodule BoardGames.Event.GameCreated do
+defmodule BoardGames.Event.TempelDesSchreckens.GameCreated do
   use TypedStruct
-
-  @type game_type :: :tempel_des_schreckens
 
   @derive Jason.Encoder
 
@@ -9,6 +7,5 @@ defmodule BoardGames.Event.GameCreated do
     field :player_id, String.t()
     field :game_id, String.t()
     field :name, String.t()
-    field :game_type, game_type()
   end
 end
