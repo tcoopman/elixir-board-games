@@ -11,6 +11,8 @@ defmodule BoardGames.Application do
       BoardGames.Repo,
       # Start the Telemetry supervisor
       BoardGamesWeb.Telemetry,
+      # EventStore
+      BoardGames.App,
       # Start the PubSub system
       {Phoenix.PubSub, name: BoardGames.PubSub},
       # Start the Endpoint (http/https)
