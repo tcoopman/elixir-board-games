@@ -5,12 +5,14 @@ defmodule BoardGames.TempelDesSchreckens do
   alias __MODULE__
 
   @type role :: :adventurer | :guardian
+  @type status :: :waiting_for_players | :playing
 
   typedstruct do
     field :game_id, String.t()
     field :players, list(String.t()), default: []
     field :name, String.t()
     field :roles, list({String.t(), role()})
+    field :status, status()
   end
 
   defguard is_non_empty_string?(str) when is_binary(str) and str != ""
@@ -47,7 +49,7 @@ defmodule BoardGames.TempelDesSchreckens do
         game_id: game_id,
         name: name
       }) do
-    %{game | game_id: game_id, name: name}
+    %{game | game_id: game_id, name: name, status: :waiting_for_players}
   end
 
   def apply(
@@ -60,7 +62,7 @@ defmodule BoardGames.TempelDesSchreckens do
   end
 
   def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.GameStarted{}) do
-    game
+    %{game | status: :playing}
   end
 
   def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.RolesDealt{
@@ -105,6 +107,9 @@ defmodule BoardGames.TempelDesSchreckens do
       player_id: player_id
     }
   end
+
+  defp start_game(%TempelDesSchreckens{status: status}) when status != :waiting_for_players,
+    do: {:error, :game_already_started}
 
   defp start_game(%TempelDesSchreckens{players: players}) when length(players) < 3,
     do: {:error, :not_enough_players_joined}
@@ -156,20 +161,21 @@ defmodule BoardGames.TempelDesSchreckens do
   defp deal_rooms(%TempelDesSchreckens{players: players} = game) do
     nb_of_players = Enum.count(players)
 
-    {nb_of_treasures, nb_of_traps} = case nb_of_players do
-      3 -> {5, 2}
-      4 -> {6, 2}
-      5 -> {7, 2}
-      6 -> {8, 2}
-      7 -> {7, 2}
-      8 -> {8, 2}
-      9 -> {9, 2}
-      10 -> {10, 3}
-    end
+    {nb_of_treasures, nb_of_traps} =
+      case nb_of_players do
+        3 -> {5, 2}
+        4 -> {6, 2}
+        5 -> {7, 2}
+        6 -> {8, 2}
+        7 -> {7, 2}
+        8 -> {8, 2}
+        9 -> {9, 2}
+        10 -> {10, 3}
+      end
 
     treasures = for _ <- 1..nb_of_treasures, do: :treasure
     traps = for _ <- 1..nb_of_traps, do: :trap
-    empty = for _ <- 1..(nb_of_players*5 - nb_of_traps - nb_of_treasures), do: :empty
+    empty = for _ <- 1..(nb_of_players * 5 - nb_of_traps - nb_of_treasures), do: :empty
     initial_cards = traps ++ treasures ++ empty
 
     rooms = initial_cards |> Enum.shuffle() |> Enum.chunk_every(5)

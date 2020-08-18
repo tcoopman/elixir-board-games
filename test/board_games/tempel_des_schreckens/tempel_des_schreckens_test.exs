@@ -153,6 +153,46 @@ defmodule BoardGames.TempelDesSchreckensTest do
         end
       )
     end
+
+    test "that has not enough players" do
+      game_id = "game id"
+
+      current_players =
+        for i <- 1..2, do: %Event.JoinedGame{game_id: game_id, player_id: "player_#{i}"}
+
+      assert_error(
+        [
+          %Event.GameCreated{
+            game_id: game_id,
+            name: "some game"
+          }
+        ] ++ current_players,
+        %Command.StartGame{
+          game_id: game_id
+        },
+        {:error, :not_enough_players_joined}
+      )
+    end
+
+    test "that is already in progress" do
+      game_id = "game id"
+
+      current_players =
+        for i <- 1..3, do: %Event.JoinedGame{game_id: game_id, player_id: "player_#{i}"}
+
+      assert_error(
+        [
+          %Event.GameCreated{
+            game_id: game_id,
+            name: "some game"
+          }
+        ] ++ current_players ++ [%Event.GameStarted{game_id: game_id}],
+        %Command.StartGame{
+          game_id: game_id
+        },
+        {:error, :game_already_started}
+      )
+    end
   end
 
   defp expectation_per_event(events, expectations) do
