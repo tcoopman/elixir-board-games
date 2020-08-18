@@ -6,6 +6,36 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
   alias BoardGames.TempelDesSchreckens.{Command, Event}
 
+  describe "Integration test" do
+    test "WIP: A simple game" do
+      game_id = "game_id"
+
+      :ok =
+        BoardGames.App.dispatch(%Command.CreateGame{
+          player_id: "player 1",
+          game_id: game_id,
+          name: "the game name"
+        })
+
+      :ok =
+        BoardGames.App.dispatch(%Command.JoinGame{
+          player_id: "player 2",
+          game_id: game_id
+        })
+
+      :ok =
+        BoardGames.App.dispatch(%Command.JoinGame{
+          player_id: "player 3",
+          game_id: game_id
+        })
+
+      :ok =
+        BoardGames.App.dispatch(%Command.StartGame{
+          game_id: game_id
+        })
+    end
+  end
+
   describe "Create a game" do
     test "that is valid" do
       :ok =
