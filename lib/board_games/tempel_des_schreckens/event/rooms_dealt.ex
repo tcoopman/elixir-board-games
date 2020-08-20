@@ -1,6 +1,8 @@
 defmodule BoardGames.TempelDesSchreckens.Event.RoomsDealt do
   use TypedStruct
 
+  @derive Jason.Encoder
+
   @type room :: :empty | :trap | :treasure
 
   typedstruct enforce: true do

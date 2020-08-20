@@ -12,7 +12,9 @@ defmodule BoardGames.Application do
       # Start the Telemetry supervisor
       BoardGamesWeb.Telemetry,
       # EventStore
+      {Registry, keys: :duplicate, name: Registry.Events},
       BoardGames.App,
+      BoardGames.ReadModel.AllGames,
       # Start the PubSub system
       {Phoenix.PubSub, name: BoardGames.PubSub},
       # Start the Endpoint (http/https)

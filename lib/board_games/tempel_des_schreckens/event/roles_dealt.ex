@@ -1,6 +1,8 @@
 defmodule BoardGames.TempelDesSchreckens.Event.RolesDealt do
   use TypedStruct
 
+  @derive Jason.Encoder
+
   @type role :: :adventurer | :guardian
 
   typedstruct enforce: true do

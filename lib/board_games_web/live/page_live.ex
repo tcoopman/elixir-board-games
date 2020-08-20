@@ -20,23 +20,36 @@ defmodule BoardGamesWeb.PageLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok,
-     assign(socket, query: "", results: %{}, changeset: CreateGame.changeset(%CreateGame{}, %{}))}
+    Registry.register(Registry.Events, :all_games, [])
+
+    {:ok, assign(socket, submitting: false, changeset: CreateGame.changeset(%CreateGame{}))}
   end
 
   @impl true
   def handle_event("save", %{"create_game" => create_game}, socket) do
-    create_game =
+    changeset =
       %CreateGame{}
       |> CreateGame.changeset(create_game)
+
+    create_game =
+      changeset
       |> Ecto.Changeset.apply_action!(:update)
 
-    BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.CreateGame{
-      name: create_game.name,
-      game_id: "TODO",
-      player_id: create_game.player_id
-    })
+    :ok =
+      BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.CreateGame{
+        name: create_game.name,
+        game_id: create_game.name,
+        player_id: create_game.player_id
+      })
 
-    {:noreply, socket}
+    {:noreply, assign(socket, submitting: true, changeset: changeset)}
+  end
+
+  @impl true
+  def handle_info({:all_games_updated, _state}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:info, "game created")
+     |> assign(submitting: false)}
   end
 end
