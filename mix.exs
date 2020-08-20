@@ -49,7 +49,8 @@ defmodule BoardGames.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:commanded, "~> 1.1"},
       {:commanded_eventstore_adapter, "~> 1.1"},
-      {:eventstore, "~> 1.1"},
+      # {:eventstore, "~> 1.1"},
+      {:eventstore, git: "https://github.com/tcoopman/eventstore.git", branch: "feature/transient-subscriptions", override: true},
       {:typed_struct, "~> 0.2.1"},
       {:magritte, "~> 0.1.0"}
     ]
