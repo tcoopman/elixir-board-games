@@ -29,7 +29,7 @@ Hooks.Flash = {
         const [_, key] = result
         this.pushEvent("lv:clear-flash", {key: key})
       }
-    })
+    });
   }
 };
 

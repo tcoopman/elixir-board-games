@@ -1,9 +1,10 @@
 <main role="main">
-  <%= for {type, color} <- [error: "red", info: "indigo"] do %>
+  <%= for {type, color} <- [error: "red", info: "indigo", success: "green"] do %>
     <div
       id="flash-<%= type %>"
       x-show="open"
       x-data="{open: <%= !!live_flash(@flash, type) %>}"
+      x-init="() => {if ('<%= type %>' === 'success') {setTimeout(() => { open = false}, 5000)}}"
       x-cloak
       x-transition:enter="transition ease-out duration-100 transform"
       x-transition:enter-start="opacity-0"
@@ -19,7 +20,7 @@
         <div class="pr-16 sm:text-center sm:px-16">
           <p class="font-medium text-white">
             <span>
-              <%= live_flash(@flash, :info) %>
+              <%= live_flash(@flash, type) %>
             </span>
           </p>
         </div>
