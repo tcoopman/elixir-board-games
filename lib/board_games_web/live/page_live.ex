@@ -49,7 +49,8 @@ defmodule BoardGamesWeb.PageLive do
   def handle_info({:all_games_updated, _state}, socket) do
     {:noreply,
      socket
-     |> put_flash(:info, "game created")
+     |> push_redirect(to: "/game/1")
+     |> put_flash(:success, "game created succesfully")
      |> assign(submitting: false)}
   end
 end

@@ -18,6 +18,8 @@ defmodule BoardGamesWeb.Router do
     pipe_through :browser
 
     live "/", PageLive, :index
+
+    live "/game/:id", GameLive, :show
   end
 
   # Other scopes may use custom stacks.
