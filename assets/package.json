@@ -14,7 +14,7 @@
     "phoenix_live_view": "file:../deps/phoenix_live_view"
   },
   "devDependencies": {
-    "@babel/core": "^7.11.1",
+    "@babel/core": "^7.11.4",
     "@babel/preset-env": "^7.11.0",
     "@tailwindcss/ui": "^0.5.0",
     "babel-loader": "^8.1.0",
@@ -28,7 +28,7 @@
     "postcss-loader": "^3.0.0",
     "postcss-preset-env": "^6.7.0",
     "sass-loader": "^9.0.3",
-    "tailwindcss": "^1.6.2",
+    "tailwindcss": "^1.7.3",
     "terser-webpack-plugin": "^4.1.0",
     "webpack": "4.44.1",
     "webpack-cli": "^3.3.12"
