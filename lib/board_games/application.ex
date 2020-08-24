@@ -14,7 +14,8 @@ defmodule BoardGames.Application do
       # EventStore
       {Registry, keys: :duplicate, name: Registry.Events},
       BoardGames.App,
-      BoardGames.ReadModel.AllGames,
+      BoardGames.ReadModel.AllGames.State,
+      BoardGames.ReadModel.AllGames.EventHandler,
       # Start the PubSub system
       {Phoenix.PubSub, name: BoardGames.PubSub},
       # Start the Endpoint (http/https)
