@@ -18,8 +18,8 @@ config :board_games, BoardGamesWeb.Endpoint,
   http: [port: 4002],
   server: false
 
-config :board_games, BoardGames.EventStore,
-  serializer: Commanded.Serialization.JsonSerializer
+config :board_games, BoardGames.EventStore, serializer: Commanded.Serialization.JsonSerializer
+
 config :board_games, BoardGames.App,
   event_store: [
     adapter: Commanded.EventStore.Adapters.InMemory,
