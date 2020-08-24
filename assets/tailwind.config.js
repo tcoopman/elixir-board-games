@@ -1,5 +1,6 @@
 module.exports = {
   purge: [],
+  experimental: 'all',
   theme: {
     extend: {},
   },
