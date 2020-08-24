@@ -15,7 +15,12 @@ defmodule BoardGames.ReadModel.AllGames.State do
 
   def handle_event(%Event.GameCreated{} = event) do
     Agent.update(__MODULE__, fn state ->
-      waiting_for_players = Map.put_new(state.waiting_for_players, event.game_id, event.name)
+      waiting_for_players =
+        Map.put_new(state.waiting_for_players, event.game_id, %{
+          game_id: event.game_id,
+          name: event.name
+        })
+
       %{state | waiting_for_players: waiting_for_players}
     end)
   end

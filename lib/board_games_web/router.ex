@@ -20,7 +20,7 @@ defmodule BoardGamesWeb.Router do
     live "/", LobbyLive, :index
 
     live "/game/new", NewGameLive
-    live "/game/:id", GameLive, :show
+    live "/game/:id", GameLive
   end
 
   # Other scopes may use custom stacks.
