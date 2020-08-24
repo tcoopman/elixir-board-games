@@ -8,6 +8,10 @@ defmodule BoardGames.ReadModel.AllGames.EventHandler do
   alias BoardGames.TempelDesSchreckens.Event
 
   def handle(%Event.GameCreated{} = event, _metadata) do
-    AllGames.State.handle_event(event)
+    :ok = AllGames.State.handle_event(event)
+
+    Registry.dispatch(Registry.Events, :all_games, fn entries ->
+      for {pid, _} <- entries, do: send(pid, {:all_games_updated, nil})
+    end)
   end
 end

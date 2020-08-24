@@ -1,4 +1,4 @@
-defmodule BoardGamesWeb.PageLive do
+defmodule BoardGamesWeb.NewGameLive do
   use Phoenix.HTML
   use BoardGamesWeb, :live_view
 

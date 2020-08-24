@@ -19,6 +19,7 @@ defmodule BoardGamesWeb.Router do
 
     live "/", LobbyLive, :index
 
+    live "/game/new", NewGameLive
     live "/game/:id", GameLive, :show
   end
 
