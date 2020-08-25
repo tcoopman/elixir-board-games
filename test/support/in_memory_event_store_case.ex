@@ -6,7 +6,7 @@ defmodule BoardGames.InMemoryEventStoreCase do
       :ok = Application.stop(:board_games)
       :ok = Application.stop(:commanded)
 
-      {:ok, _apps} = Application.ensure_all_started(:board_games)
+    {:ok, _apps} = Application.ensure_all_started(:board_games)
     end)
   end
 end

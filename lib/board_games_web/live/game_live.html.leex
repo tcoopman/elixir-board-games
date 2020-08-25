@@ -4,7 +4,7 @@
       <div class="">
         <h2 class="text-3xl leading-9 font-extrabold text-white tracking-tight sm:text-4xl"><%= @name %>:
           <%= case @status do %>
-            <% :waiting -> %>Waiting for players
+            <% :waiting_for_players -> %>Waiting for players
             <% :playing -> %>Playing
           <% end %>
         </h2>

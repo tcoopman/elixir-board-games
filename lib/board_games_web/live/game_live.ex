@@ -2,7 +2,7 @@ defmodule BoardGamesWeb.GameLive do
   use Phoenix.HTML
   use BoardGamesWeb, :live_view
 
-  @type status :: :waiting | :playing | :cancelled | :finished
+  @type status :: :waiting_for_players | :playing | :cancelled | :finished
 
   @impl true
   def mount(_params, _session, socket) do
@@ -10,7 +10,7 @@ defmodule BoardGamesWeb.GameLive do
      socket
      |> assign(
        name: "Awesome game name",
-       status: :waiting,
+       status: :waiting_for_players,
        players: players(),
        allowed_actions: allowed_actions()
      )}
