@@ -44,7 +44,14 @@ defmodule BoardGamesWeb.GameLive do
       %{
         action: :cancel,
         title: "Cancel",
-        icon: "x-circle.svg"
+        icon: "x-circle.svg",
+        type: :secondary
+      },
+      %{
+        action: :start_game,
+        title: "Start",
+        icon: "check.svg",
+        type: :primary
       }
     ]
   end
