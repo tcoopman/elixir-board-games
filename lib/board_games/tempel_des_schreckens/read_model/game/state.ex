@@ -3,7 +3,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   use Agent
 
   alias BoardGames.TempelDesSchreckens.Event
-  alias __MODULE__
+  alias BoardGames.TempelDesSchreckens.ReadModel.Game
 
   @type status :: :waiting_for_players
 
@@ -14,17 +14,17 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   end
 
   def start_link(_) do
-    Agent.start_link(fn -> %State{} end, name: __MODULE__)
+    Agent.start_link(fn -> %Game.State{} end)
   end
 
   def handle_event(%Event.GameCreated{game_id: game_id} = _event) do
-    Agent.update(__MODULE__, fn state ->
+    Agent.update(pid(game_id), fn state ->
       %{state | game_id: game_id}
     end)
   end
 
-  def handle_event(%Event.JoinedGame{player_id: player_id} = _event) do
-    Agent.update(__MODULE__, fn state ->
+  def handle_event(%Event.JoinedGame{player_id: player_id, game_id: game_id} = _event) do
+    Agent.update(pid(game_id), fn state ->
       player =
         with {:ok, player} <- BoardGames.ReadModel.Players.by_id(player_id) do
           player
@@ -43,15 +43,19 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
-  def status() do
-    Agent.get(__MODULE__, fn %State{status: status} ->
+  def status(game_id) do
+    Agent.get(pid(game_id), fn %Game.State{status: status} ->
       status
     end)
   end
 
-  def players() do
-    Agent.get(__MODULE__, fn %State{players: players} ->
+  def players(game_id) do
+    Agent.get(pid(game_id), fn %Game.State{players: players} ->
       players
     end)
+  end
+
+  defp pid(game_id) do
+    Game.Supervisor.state_by_game_id(game_id)
   end
 end

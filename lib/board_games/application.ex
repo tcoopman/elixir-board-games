@@ -19,9 +19,9 @@ defmodule BoardGames.Application do
       {Phoenix.PubSub, name: BoardGames.PubSub},
       # Start the Endpoint (http/https)
       # Readmodels
+      BoardGames.TempelDesSchreckens.ReadModel.Game.Supervisor,
       BoardGames.ReadModel.AllGames.State,
       BoardGames.ReadModel.AllGames.EventHandler,
-      BoardGames.TempelDesSchreckens.ReadModel.Game.State,
 
       BoardGamesWeb.Endpoint
       # Start a worker by calling: BoardGames.Worker.start_link(arg)
