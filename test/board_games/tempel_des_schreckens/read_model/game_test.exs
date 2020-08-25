@@ -3,6 +3,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
   use BoardGames.AggregateCase, aggregate: BoardGames.TempelDesSchreckens, async: false
 
   alias BoardGames.TempelDesSchreckens.ReadModel.Game.State
+  alias BoardGames.ReadModel.Player
 
   describe "A game" do
     test "should model a valid game" do
@@ -11,7 +12,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
       handle_events(events)
 
       assert State.status() == :waiting_for_players
-      assert_all(State.players(), fn _player ->
+      assert_all(State.players(), fn %Player{} ->
         true
       end)
     end

@@ -22,9 +22,24 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
       %{state | game_id: game_id}
     end)
   end
+
   def handle_event(%Event.JoinedGame{player_id: player_id} = _event) do
     Agent.update(__MODULE__, fn state ->
-      %{state | players: [player_id | state.players]}
+      player =
+        with {:ok, player} <- BoardGames.ReadModel.Players.by_id(player_id) do
+          player
+        else
+          {:error, :not_found} ->
+            %BoardGames.ReadModel.Player{
+              id: player_id,
+              name: "User does not exist",
+              bio: "A John Doe, a ghost of GDPR?",
+              picture_url:
+                "https://images.unsplash.com/photo-1501871732394-eccc65227089?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+            }
+        end
+
+      %{state | players: [player | state.players]}
     end)
   end
 
@@ -39,5 +54,4 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
       players
     end)
   end
-
 end
