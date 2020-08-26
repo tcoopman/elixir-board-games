@@ -47,7 +47,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
     end
 
     test "game can be started and not joined", %{game_id: game_id, pid: pid} do
-      {events, opts} = BoardGames.Test.Stories.can_be_started(game_id: game_id)
+      {events, _opts} = BoardGames.Test.Stories.can_be_started(game_id: game_id)
       player_id = "not joined"
 
       handle_events(pid, events)
