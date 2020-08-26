@@ -10,6 +10,8 @@ defmodule BoardGamesWeb.GameLive do
   def mount(%{"id" => game_id}, _session, socket) do
     Registry.register(Registry.Events, {:game, game_id}, [])
 
+    # TODO what if the game_id does not exist?
+
     {:ok,
      socket
      |> assign(
@@ -27,6 +29,7 @@ defmodule BoardGamesWeb.GameLive do
     game_id = socket.assigns.game_id
     player_id = socket.assigns.player_id
 
+    # TODO this can give an error
     :ok =
       BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.JoinGame{
         game_id: game_id,
@@ -69,13 +72,30 @@ defmodule BoardGamesWeb.GameLive do
 
   defp allowed_actions(game_id, player_id) do
     Game.State.allowed_actions(game_id, player_id)
-    |> Enum.map(fn :join ->
-      %{
-        action: "join_game",
-        title: "Join game",
-        icon: "user-add.svg",
-        type: :primary
-      }
+    |> Enum.map(fn
+      :join ->
+        %{
+          action: "join_game",
+          title: "Join game",
+          icon: "user-add.svg",
+          type: :primary
+        }
+
+      :cancel ->
+        %{
+          action: "cancel_game",
+          title: "Cancel",
+          icon: "x-circle.svg",
+          type: :secondary
+        }
+
+      :start ->
+        %{
+          action: "start_game",
+          title: "Start game",
+          icon: "check.svg",
+          type: :primary
+        }
     end)
   end
 end

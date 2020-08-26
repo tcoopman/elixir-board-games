@@ -5,7 +5,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   alias BoardGames.TempelDesSchreckens.Event
   alias BoardGames.TempelDesSchreckens.ReadModel.Game
 
-  @type status :: :waiting_for_players
+  @type status :: :waiting_for_players | :can_be_started
 
   typedstruct enforce: true do
     field :status, status(), default: :waiting_for_players
@@ -43,6 +43,12 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
+  def handle_event(pid, %Event.GameCanBeStarted{} = _event) do
+    Agent.update(pid, fn state ->
+      %{state | status: :can_be_started}
+    end)
+  end
+
   def status(game_id) do
     Agent.get(pid(game_id), fn %Game.State{status: status} ->
       status
@@ -69,6 +75,9 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
     case {status, player_joined} do
       {:waiting_for_players, false} -> [:join]
+      {:waiting_for_players, true} -> [:cancel]
+      {:can_be_started, false} -> [:join]
+      {:can_be_started, true} -> [:cancel, :start]
       _ -> []
     end
   end

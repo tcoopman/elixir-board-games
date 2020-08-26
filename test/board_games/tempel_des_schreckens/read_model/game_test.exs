@@ -43,8 +43,27 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert Game.State.allowed_actions(game_id, player_id) == []
+      assert Game.State.allowed_actions(game_id, player_id) == [:cancel]
     end
+
+    test "game can be started and not joined", %{game_id: game_id, pid: pid} do
+      {events, opts} = BoardGames.Test.Stories.can_be_started(game_id: game_id)
+      player_id = "not joined"
+
+      handle_events(pid, events)
+
+      assert Game.State.allowed_actions(game_id, player_id) == [:join]
+    end
+
+    test "game can be started and joined", %{game_id: game_id, pid: pid} do
+      {events, opts} = BoardGames.Test.Stories.can_be_started(game_id: game_id)
+      player_id = Keyword.fetch!(opts, :player_id)
+
+      handle_events(pid, events)
+
+      assert Game.State.allowed_actions(game_id, player_id) == [:cancel, :start]
+    end
+
   end
 
   defp handle_events(pid, events), do: Enum.each(events, &Game.State.handle_event(pid, &1))
