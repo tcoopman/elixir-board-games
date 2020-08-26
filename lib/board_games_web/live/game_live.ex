@@ -22,6 +22,19 @@ defmodule BoardGamesWeb.GameLive do
      )}
   end
 
+  @impl true
+  def handle_event("join_game", %{}, socket) do
+    game_id = socket.assigns.game_id
+    player_id = socket.assigns.player_id
+    :ok =
+      BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.JoinGame{
+        game_id: game_id,
+        player_id: player_id
+      })
+
+    {:noreply, socket}
+  end
+
   defp players(game_id) do
     Game.State.players(game_id)
   end
@@ -30,9 +43,9 @@ defmodule BoardGamesWeb.GameLive do
     Game.State.allowed_actions(game_id, player_id)
     |> Enum.map(fn :join ->
       %{
-        action: :join,
+        action: "join_game",
         title: "Join game",
-        icon: "check.svg",
+        icon: "user-add.svg",
         type: :primary
       }
     end)
