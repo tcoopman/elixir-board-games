@@ -2,6 +2,8 @@ defmodule BoardGamesWeb.GameLive do
   use Phoenix.HTML
   use BoardGamesWeb, :live_view
 
+  alias BoardGames.TempelDesSchreckens.ReadModel.Game
+
   @type status :: :waiting_for_players | :playing | :cancelled | :finished
 
   @impl true
@@ -15,37 +17,34 @@ defmodule BoardGamesWeb.GameLive do
        game_id: game_id,
        status: :waiting_for_players,
        players: players(game_id),
-       allowed_actions: allowed_actions()
+       player_id: "Player3",
+       allowed_actions: allowed_actions(game_id, "Player4")
      )}
   end
 
   defp players(game_id) do
-    BoardGames.TempelDesSchreckens.ReadModel.Game.State.players(game_id)
+    Game.State.players(game_id)
   end
 
-  defp allowed_actions() do
-    [
+  defp allowed_actions(game_id, player_id) do
+    Game.State.allowed_actions(game_id, player_id)
+    |> Enum.map(fn :join ->
       %{
-        action: :cancel,
-        title: "Cancel",
-        icon: "x-circle.svg",
-        type: :secondary
-      },
-      %{
-        action: :start_game,
-        title: "Start",
+        action: :join,
+        title: "Join game",
         icon: "check.svg",
         type: :primary
       }
-    ]
+    end)
   end
 
   @impl true
   def handle_info({:game_updated, _state}, socket) do
-    players = players(socket.assigns.game_id)
+    game_id = socket.assigns.game_id
+    player_id = socket.assigns.player_id
 
     {:noreply,
      socket
-     |> assign(:players, players)}
+     |> assign(players: players(game_id), allowed_actions: allowed_actions(game_id, player_id))}
   end
 end

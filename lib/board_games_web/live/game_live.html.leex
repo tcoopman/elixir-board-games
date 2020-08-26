@@ -20,7 +20,7 @@
     </div>
 
     <div class="mt-5 flex lg:mt-0 lg:ml-4">
-      <%= for {action, index} <- Enum.with_index(@allowed_actions) do %>
+      <%= for action <- @allowed_actions do %>
         <span class="ml-3 first:ml-0 shadow-sm rounded-md">
           <button type="button" class="inline-flex items-center px-4 py-2 border text-sm leading-5 font-medium rounded-md transition duration-150 ease-in-out
           <%= case action.type do %>

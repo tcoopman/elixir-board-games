@@ -55,6 +55,24 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
+  def allowed_actions(game_id, player_id) do
+    {status, players} =
+      Agent.get(pid(game_id), fn %Game.State{status: status, players: players} ->
+        {status, players}
+      end)
+
+    player_joined =
+      Enum.any?(players, fn
+        %{id: ^player_id} -> true
+        _ -> false
+      end)
+
+    case {status, player_joined} do
+      {:waiting_for_players, false} -> [:join]
+      _ -> []
+    end
+  end
+
   defp pid(game_id) do
     Game.Supervisor.state_by_game_id(game_id)
   end
