@@ -176,6 +176,34 @@ defmodule BoardGames.TempelDesSchreckensTest do
         {:error, :player_already_joined}
       )
     end
+
+    test "join the game and now the game can be started" do
+      game_id = "game id"
+      player_id = "player 3"
+
+      current_players =
+        for i <- 1..2, do: %Event.JoinedGame{game_id: game_id, player_id: "player_#{i}"}
+
+      assert_events(
+        [
+          %Event.GameCreated{
+            game_id: game_id,
+            name: "some game"
+          }
+        ] ++ current_players,
+        %Command.JoinGame{
+          player_id: player_id,
+          game_id: game_id
+        },
+        [
+          %Event.JoinedGame{
+            game_id: game_id,
+            player_id: player_id
+          },
+          %Event.GameCanBeStarted{game_id: game_id}
+        ]
+      )
+    end
   end
 
   describe "Start a game" do

@@ -3,6 +3,7 @@ defmodule BoardGames.TempelDesSchreckens do
   use Magritte
 
   alias __MODULE__
+  alias BoardGames.TempelDesSchreckens.{Event, Command}
 
   @type role :: :adventurer | :guardian
   @type status :: :waiting_for_players | :playing
@@ -19,7 +20,7 @@ defmodule BoardGames.TempelDesSchreckens do
 
   def execute(
         game,
-        %BoardGames.TempelDesSchreckens.Command.CreateGame{} = command
+        %Command.CreateGame{} = command
       ) do
     game
     |> Commanded.Aggregate.Multi.new()
@@ -27,10 +28,10 @@ defmodule BoardGames.TempelDesSchreckens do
     |> Commanded.Aggregate.Multi.execute(&join_game(&1, command.player_id))
   end
 
-  def execute(game, %BoardGames.TempelDesSchreckens.Command.JoinGame{player_id: player_id}),
+  def execute(game, %Command.JoinGame{player_id: player_id}),
     do: join_game(game, player_id)
 
-  def execute(game, %BoardGames.TempelDesSchreckens.Command.StartGame{}) do
+  def execute(game, %Command.StartGame{}) do
     game
     |> Commanded.Aggregate.Multi.new()
     |> Commanded.Aggregate.Multi.execute(&start_game(&1))
@@ -42,10 +43,10 @@ defmodule BoardGames.TempelDesSchreckens do
 
   @spec apply(
           BoardGames.TempelDesSchreckens.t(),
-          BoardGames.TempelDesSchreckens.Event.GameCreated.t()
+          Event.GameCreated.t()
         ) ::
           BoardGames.TempelDesSchreckens.t()
-  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.GameCreated{
+  def apply(%TempelDesSchreckens{} = game, %Event.GameCreated{
         game_id: game_id,
         name: name
       }) do
@@ -54,32 +55,36 @@ defmodule BoardGames.TempelDesSchreckens do
 
   def apply(
         %TempelDesSchreckens{players: players} = game,
-        %BoardGames.TempelDesSchreckens.Event.JoinedGame{
+        %Event.JoinedGame{
           player_id: player_id
         }
       ) do
     %{game | players: [player_id | players]}
   end
 
-  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.GameStarted{}) do
+  def apply(%TempelDesSchreckens{} = game, %Event.GameStarted{}) do
     %{game | status: :playing}
   end
 
-  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.RolesDealt{
+  def apply(%TempelDesSchreckens{} = game, %Event.RolesDealt{
         roles: roles
       }) do
     %{game | roles: roles}
   end
 
-  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.ReceivedKey{}) do
+  def apply(%TempelDesSchreckens{} = game, %Event.ReceivedKey{}) do
     game
   end
 
-  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.RoomsDealt{}) do
+  def apply(%TempelDesSchreckens{} = game, %Event.RoomsDealt{}) do
     game
   end
 
-  def apply(%TempelDesSchreckens{} = game, %BoardGames.TempelDesSchreckens.Event.RoundStarted{}) do
+  def apply(%TempelDesSchreckens{} = game, %Event.RoundStarted{}) do
+    game
+  end
+
+  def apply(%TempelDesSchreckens{} = game, %Event.GameCanBeStarted{}) do
     game
   end
 
@@ -87,7 +92,7 @@ defmodule BoardGames.TempelDesSchreckens do
     do: {:error, :invalid_name}
 
   defp create_game(%TempelDesSchreckens{players: []}, id, name) do
-    %BoardGames.TempelDesSchreckens.Event.GameCreated{
+    %Event.GameCreated{
       game_id: id,
       name: name
     }
@@ -102,15 +107,26 @@ defmodule BoardGames.TempelDesSchreckens do
        do: {:error, :max_number_of_players_reached}
 
   defp join_game(%TempelDesSchreckens{players: players} = game, player_id) do
-    case Enum.member?(players, player_id) do
-      false ->
-        %BoardGames.TempelDesSchreckens.Event.JoinedGame{
+    is_member = Enum.member?(players, player_id)
+    number_of_players = Enum.count(players)
+
+    if is_member do
+      {:error, :player_already_joined}
+    else
+      if number_of_players == 2 do
+        [
+          %Event.JoinedGame{
+            game_id: game.game_id,
+            player_id: player_id
+          },
+          %Event.GameCanBeStarted{game_id: game.game_id}
+        ]
+      else
+        %Event.JoinedGame{
           game_id: game.game_id,
           player_id: player_id
         }
-
-      true ->
-        {:error, :player_already_joined}
+      end
     end
   end
 
@@ -121,7 +137,7 @@ defmodule BoardGames.TempelDesSchreckens do
     do: {:error, :not_enough_players_joined}
 
   defp start_game(%TempelDesSchreckens{} = game) do
-    %BoardGames.TempelDesSchreckens.Event.GameStarted{game_id: game.game_id}
+    %Event.GameStarted{game_id: game.game_id}
   end
 
   defp deal_roles(%TempelDesSchreckens{players: players} = game) do
@@ -148,20 +164,20 @@ defmodule BoardGames.TempelDesSchreckens do
       |> Enum.take_random(nb_of_players)
       |> Enum.zip(players, ...)
 
-    %BoardGames.TempelDesSchreckens.Event.RolesDealt{game_id: game.game_id, roles: roles}
+    %Event.RolesDealt{game_id: game.game_id, roles: roles}
   end
 
   defp give_key(%TempelDesSchreckens{players: players} = game) do
     player_with_key = players |> Enum.reverse() |> hd()
 
-    %BoardGames.TempelDesSchreckens.Event.ReceivedKey{
+    %Event.ReceivedKey{
       game_id: game.game_id,
       player_id: player_with_key
     }
   end
 
   defp start_round(%TempelDesSchreckens{} = game) do
-    %BoardGames.TempelDesSchreckens.Event.RoundStarted{game_id: game.game_id}
+    %Event.RoundStarted{game_id: game.game_id}
   end
 
   defp deal_rooms(%TempelDesSchreckens{players: players} = game) do
@@ -190,6 +206,6 @@ defmodule BoardGames.TempelDesSchreckens do
       rooms
       |> Enum.zip(players, ...)
 
-    %BoardGames.TempelDesSchreckens.Event.RoomsDealt{game_id: game.game_id, rooms: rooms}
+    %Event.RoomsDealt{game_id: game.game_id, rooms: rooms}
   end
 end
