@@ -153,6 +153,29 @@ defmodule BoardGames.TempelDesSchreckensTest do
         {:error, :max_number_of_players_reached}
       )
     end
+
+    test "join the same game twice" do
+      game_id = "game id"
+      player_id = "player 1"
+
+      assert_error(
+        [
+          %Event.GameCreated{
+            game_id: game_id,
+            name: "some game"
+          },
+          %Event.JoinedGame{
+            game_id: game_id,
+            player_id: player_id
+          }
+        ],
+        %Command.JoinGame{
+          player_id: player_id,
+          game_id: game_id
+        },
+        {:error, :player_already_joined}
+      )
+    end
   end
 
   describe "Start a game" do

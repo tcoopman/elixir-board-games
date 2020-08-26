@@ -101,11 +101,17 @@ defmodule BoardGames.TempelDesSchreckens do
        when length(players) >= 10,
        do: {:error, :max_number_of_players_reached}
 
-  defp join_game(%TempelDesSchreckens{} = game, player_id) do
-    %BoardGames.TempelDesSchreckens.Event.JoinedGame{
-      game_id: game.game_id,
-      player_id: player_id
-    }
+  defp join_game(%TempelDesSchreckens{players: players} = game, player_id) do
+    case Enum.member?(players, player_id) do
+      false ->
+        %BoardGames.TempelDesSchreckens.Event.JoinedGame{
+          game_id: game.game_id,
+          player_id: player_id
+        }
+
+      true ->
+        {:error, :player_already_joined}
+    end
   end
 
   defp start_game(%TempelDesSchreckens{status: status}) when status != :waiting_for_players,
