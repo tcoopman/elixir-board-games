@@ -6,10 +6,13 @@ defmodule BoardGamesWeb.GameLive do
 
   @impl true
   def mount(%{"id" => game_id}, _session, socket) do
+    Registry.register(Registry.Events, {:game, game_id}, [])
+
     {:ok,
      socket
      |> assign(
        name: "Awesome game name",
+       game_id: game_id,
        status: :waiting_for_players,
        players: players(game_id),
        allowed_actions: allowed_actions()
@@ -35,5 +38,14 @@ defmodule BoardGamesWeb.GameLive do
         type: :primary
       }
     ]
+  end
+
+  @impl true
+  def handle_info({:game_updated, _state}, socket) do
+    players = players(socket.assigns.game_id)
+
+    {:noreply,
+     socket
+     |> assign(:players, players)}
   end
 end

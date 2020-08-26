@@ -17,14 +17,14 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     Agent.start_link(fn -> %Game.State{} end)
   end
 
-  def handle_event(%Event.GameCreated{game_id: game_id} = _event) do
-    Agent.update(pid(game_id), fn state ->
+  def handle_event(pid, %Event.GameCreated{game_id: game_id} = _event) do
+    Agent.update(pid, fn state ->
       %{state | game_id: game_id}
     end)
   end
 
-  def handle_event(%Event.JoinedGame{player_id: player_id, game_id: game_id} = _event) do
-    Agent.update(pid(game_id), fn state ->
+  def handle_event(pid, %Event.JoinedGame{player_id: player_id} = _event) do
+    Agent.update(pid, fn state ->
       player =
         with {:ok, player} <- BoardGames.ReadModel.Players.by_id(player_id) do
           player
