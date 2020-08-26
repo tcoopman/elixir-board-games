@@ -46,6 +46,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.Supervisor do
   end
 
   def state_by_game_id(game_id) do
+    # TODO what if the game_id does not exist? TEST
     {_, pid, _, _} =
       Supervisor.which_children(__MODULE__)
       |> Enum.find(fn
