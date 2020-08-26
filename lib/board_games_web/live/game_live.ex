@@ -18,7 +18,7 @@ defmodule BoardGamesWeb.GameLive do
        status: :waiting_for_players,
        players: players(game_id),
        player_id: "Player3",
-       allowed_actions: allowed_actions(game_id, "Player4")
+       allowed_actions: allowed_actions(game_id, "Player3")
      )}
   end
 
@@ -26,6 +26,7 @@ defmodule BoardGamesWeb.GameLive do
   def handle_event("join_game", %{}, socket) do
     game_id = socket.assigns.game_id
     player_id = socket.assigns.player_id
+
     :ok =
       BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.JoinGame{
         game_id: game_id,
@@ -33,6 +34,33 @@ defmodule BoardGamesWeb.GameLive do
       })
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:game_updated, _state}, socket) do
+    game_id = socket.assigns.game_id
+    player_id = socket.assigns.player_id
+
+    {:noreply,
+     socket
+     |> assign(players: players(game_id), allowed_actions: allowed_actions(game_id, player_id))}
+  end
+
+  def subtitle(status, allowed_actions) do
+    case status do
+      :waiting_for_players ->
+        can_join =
+          Enum.any?(allowed_actions, fn
+            %{action: "join_game"} -> true
+            _ -> false
+          end)
+
+        if can_join do
+          "Your are a currently a spectator, click join to enter the game"
+        else
+          "The game is waiting for more players"
+        end
+    end
   end
 
   defp players(game_id) do
@@ -49,15 +77,5 @@ defmodule BoardGamesWeb.GameLive do
         type: :primary
       }
     end)
-  end
-
-  @impl true
-  def handle_info({:game_updated, _state}, socket) do
-    game_id = socket.assigns.game_id
-    player_id = socket.assigns.player_id
-
-    {:noreply,
-     socket
-     |> assign(players: players(game_id), allowed_actions: allowed_actions(game_id, player_id))}
   end
 end
