@@ -43,8 +43,7 @@ defmodule BoardGamesWeb.GameLive do
       {:noreply, socket}
     else
       {:error, error} ->
-        # TODO something is wrong with the error here on put_flash
-        # also give a better error message
+        # TODO give a better error message
         {:noreply,
          socket
          |> put_flash(:error, error)}

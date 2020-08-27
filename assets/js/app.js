@@ -22,14 +22,12 @@ let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("
 let Hooks = {}
 Hooks.Flash = {
   mounted() {
-    this.el.addEventListener('transitionend', (evt) => {
-      evt.stopPropagation();
-      const result = /flash-([\w]*)/.exec(evt.target.id);
-      if (result) {
-        const [_, key] = result
-        this.pushEvent("lv:clear-flash", {key: key})
-      }
-    });
+    this.el.addEventListener('close-flash', (evt) => {
+      const timeout = evt.detail.timeout || 500;
+      setTimeout(() => {
+        this.pushEvent("lv:clear-flash", {key: evt.detail.key})
+      }, timeout);
+    })
   }
 };
 

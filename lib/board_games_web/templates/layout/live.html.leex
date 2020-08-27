@@ -4,7 +4,9 @@
       id="flash-<%= type %>"
       x-show="open"
       x-data="{open: <%= !!live_flash(@flash, type) %>}"
-      x-init="() => {if ('<%= type %>' === 'success') {setTimeout(() => { open = false}, 5000)}}"
+      x-init="() => {
+        if ('<%= type %>' === 'success') {setTimeout(() => { open = false}, 5000)}
+      }"
       x-cloak
       x-transition:enter="transition ease-out duration-100 transform"
       x-transition:enter-start="opacity-0"
@@ -25,7 +27,7 @@
           </p>
         </div>
         <div class="absolute inset-y-0 right-0 pt-1 pr-1 flex items-start sm:pt-1 sm:pr-2 sm:items-start">
-          <button @click="open = false" type="button" class="flex p-2 rounded-md hover:bg-<%= color %>-500 focus:outline-none focus:bg-<%= color %>-500 transition ease-in-out duration-150" aria-label="Dismiss">
+          <button @click="$dispatch('close-flash', {key: '<%= type %>', timeout: 300}); open = false" type="button" class="flex p-2 rounded-md hover:bg-<%= color %>-500 focus:outline-none focus:bg-<%= color %>-500 transition ease-in-out duration-150" aria-label="Dismiss">
             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
