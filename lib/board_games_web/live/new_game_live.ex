@@ -26,7 +26,7 @@ defmodule BoardGamesWeb.NewGameLive do
   end
 
   @impl true
-  def handle_event("save", %{"create_game" => create_game}, socket) do
+  def handle_event("create_game", %{"create_game" => create_game}, socket) do
     changeset =
       %CreateGame{}
       |> CreateGame.changeset(create_game)
