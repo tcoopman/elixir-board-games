@@ -42,15 +42,16 @@ defmodule BoardGamesWeb.NewGameLive do
         player_id: create_game.player_id
       })
 
-    {:noreply, assign(socket, submitting: true, changeset: changeset)}
+    {:noreply, assign(socket, submitting: true, changeset: changeset, game_id: create_game.name)}
   end
 
   @impl true
   def handle_info({:all_games_updated, _state}, socket) do
-    # TODO redirect to the correct game
+    game_id = socket.assigns.game_id
+
     {:noreply,
      socket
-     |> push_redirect(to: "/game/1")
+     |> push_redirect(to: "/game/#{game_id}")
      |> put_flash(:success, "game created succesfully")
      |> assign(submitting: false)}
   end
