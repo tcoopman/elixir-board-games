@@ -12,7 +12,7 @@
   <body>
 
     <div class="bg-gray-800 pb-32">
-      <%= render "nav.html" %>
+      <%= render "nav.html", conn: @conn %>
       <%= @inner_content %>
     </div>
 
