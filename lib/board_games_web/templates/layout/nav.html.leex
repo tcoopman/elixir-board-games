@@ -76,7 +76,9 @@
   <div
     class="border-b border-gray-700 md:hidden"
     :class="{'block': menuOpen === true, 'hidden': menuOpen === false}"
-    >
+    @click="menuOpen = false"
+    @click.away="menuOpen = false"
+  >
     <div class="px-2 py-3 space-y-1 sm:px-3">
       <%= live_redirect "Lobby", to: Routes.live_path(@conn, BoardGamesWeb.LobbyLive),
       class: "block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700" %>
