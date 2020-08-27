@@ -26,7 +26,8 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.EventHandler do
   end
 
   defp get_pid!(%{pid: nil, game_id: game_id}) do
-    Game.Supervisor.state_by_game_id(game_id)
+    {:ok, pid} = Game.Supervisor.state_by_game_id(game_id)
+    pid
   end
 
   defp get_pid!(%{pid: pid}) when not is_nil(pid), do: pid

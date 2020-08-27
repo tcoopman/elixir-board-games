@@ -10,18 +10,24 @@ defmodule BoardGamesWeb.GameLive do
   def mount(%{"id" => game_id}, _session, socket) do
     Registry.register(Registry.Events, {:game, game_id}, [])
 
-    # TODO what if the game_id does not exist?
-
-    {:ok,
-     socket
-     |> assign(
-       name: "Awesome game name",
-       game_id: game_id,
-       status: :waiting_for_players,
-       players: players(game_id),
-       player_id: "Player3",
-       allowed_actions: allowed_actions(game_id, "Player3")
-     )}
+    with {:ok, _state_pid} <- Game.Supervisor.state_by_game_id(game_id) do
+      {:ok,
+       socket
+       |> assign(
+         name: "Awesome game name",
+         game_id: game_id,
+         status: :waiting_for_players,
+         players: players(game_id),
+         player_id: "Player3",
+         allowed_actions: allowed_actions(game_id, "Player3")
+       )}
+    else
+      {:error, :game_not_found} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Game #{game_id} cannot be found")
+         |> push_redirect(to: "/")}
+    end
   end
 
   @impl true

@@ -83,6 +83,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   end
 
   defp pid(game_id) do
-    Game.Supervisor.state_by_game_id(game_id)
+    {:ok, pid} =Game.Supervisor.state_by_game_id(game_id)
+    pid
   end
 end

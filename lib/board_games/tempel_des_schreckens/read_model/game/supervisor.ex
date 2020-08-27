@@ -46,21 +46,19 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.Supervisor do
   end
 
   def state_by_game_id(game_id) do
-    # TODO what if the game_id does not exist? TEST
-    {_, pid, _, _} =
-      Supervisor.which_children(__MODULE__)
-      |> Enum.find(fn
-        {{_, ^game_id}, _, _, _} -> true
-        _ -> false
-      end)
-
-    {_, state_pid, _, _} =
-      Supervisor.which_children(pid)
-      |> Enum.find(fn
-        {{Game.State, _}, _, _, _} -> true
-        _ -> false
-      end)
-
-    state_pid
+    with all_games <- Supervisor.which_children(__MODULE__),
+         {:ok, supervisor_pid} <-
+           Enum.find_value(all_games, {:error, :game_not_found}, fn
+             {{_, ^game_id}, pid, _, _} -> {:ok, pid}
+             _ -> false
+           end),
+         children <- Supervisor.which_children(supervisor_pid),
+         {:ok, state_pid} <-
+           Enum.find_value(children, {:error, :state_not_found}, fn
+             {{Game.State, _}, pid, _, _} -> {:ok, pid}
+             _ -> false
+           end) do
+      {:ok, state_pid}
+    end
   end
 end

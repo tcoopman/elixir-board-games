@@ -8,9 +8,13 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
   setup do
     game_id = UUID.uuid4()
     Game.Supervisor.start_event_handler(game_id)
-    pid = Game.Supervisor.state_by_game_id(game_id)
+    {:ok, pid} = Game.Supervisor.state_by_game_id(game_id)
 
     [game_id: game_id, pid: pid]
+  end
+
+  test "Game does not exist" do
+    assert {:error, :game_not_found} = Game.Supervisor.state_by_game_id("invalid_id")
   end
 
   describe "A game waiting for players" do
@@ -24,7 +28,6 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
         true
       end)
     end
-
   end
 
   describe "Allowed actions" do
