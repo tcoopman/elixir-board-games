@@ -47,6 +47,7 @@ defmodule BoardGamesWeb.NewGameLive do
 
   @impl true
   def handle_info({:all_games_updated, _state}, socket) do
+    # TODO redirect to the correct game
     {:noreply,
      socket
      |> push_redirect(to: "/game/1")

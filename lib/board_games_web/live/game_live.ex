@@ -35,14 +35,20 @@ defmodule BoardGamesWeb.GameLive do
     game_id = socket.assigns.game_id
     player_id = socket.assigns.player_id
 
-    # TODO this can give an error
-    :ok =
-      BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.JoinGame{
-        game_id: game_id,
-        player_id: player_id
-      })
-
-    {:noreply, socket}
+    with :ok <-
+           BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.JoinGame{
+             game_id: game_id,
+             player_id: player_id
+           }) do
+      {:noreply, socket}
+    else
+      {:error, error} ->
+        # TODO something is wrong with the error here on put_flash
+        # also give a better error message
+        {:noreply,
+         socket
+         |> put_flash(:error, error)}
+    end
   end
 
   @impl true
