@@ -91,6 +91,9 @@ defmodule BoardGames.TempelDesSchreckens do
   defp create_game(%TempelDesSchreckens{}, _, name) when not is_non_empty_string?(name),
     do: {:error, :invalid_name}
 
+  defp create_game(%TempelDesSchreckens{status: status}, _, _name) when not is_nil(status),
+    do: {:error, :game_already_exists}
+
   defp create_game(%TempelDesSchreckens{players: []}, id, name) do
     %Event.GameCreated{
       game_id: id,

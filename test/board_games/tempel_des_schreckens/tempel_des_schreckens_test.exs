@@ -73,6 +73,26 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
       assert_error(command, {:error, :invalid_name})
     end
+
+    test "with a duplicate id" do
+      game_id = "Game1"
+      command = %Command.CreateGame{
+        player_id: "player_id",
+        game_id: game_id,
+        name: "first"
+      }
+
+      assert_error(
+        [
+          %Event.GameCreated{
+            game_id: game_id,
+            name: "some game"
+          }
+        ],
+        command,
+        {:error, :game_already_exists}
+      )
+    end
   end
 
   describe "Join a game" do
