@@ -8,6 +8,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   @type status :: :waiting_for_players | :can_be_started
 
   typedstruct enforce: true do
+    field :name, String.t(), default: nil
     field :status, status(), default: :waiting_for_players
     field :game_id, String.t(), default: nil
     field :players, list(any()), default: []
@@ -17,9 +18,9 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     Agent.start_link(fn -> %Game.State{} end)
   end
 
-  def handle_event(pid, %Event.GameCreated{game_id: game_id} = _event) do
+  def handle_event(pid, %Event.GameCreated{game_id: game_id, name: name} = _event) do
     Agent.update(pid, fn state ->
-      %{state | game_id: game_id}
+      %{state | game_id: game_id, name: name}
     end)
   end
 
@@ -47,6 +48,10 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     Agent.update(pid, fn state ->
       %{state | status: :can_be_started}
     end)
+  end
+
+  def name(game_id) do
+    Agent.get(pid(game_id), fn %Game.State{name: name} -> name end)
   end
 
   def status(game_id) do

@@ -19,11 +19,13 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
   describe "A game waiting for players" do
     test "should model a valid game", %{game_id: game_id, pid: pid} do
-      {events, _opts} = BoardGames.Test.Stories.waiting_for_players(game_id: game_id)
+      name = "Awesome name"
+      {events, _opts} = BoardGames.Test.Stories.waiting_for_players(game_id: game_id, game_name: name)
 
       handle_events(pid, events)
 
       assert Game.State.status(game_id) == :waiting_for_players
+      assert Game.State.name(game_id) == name
       assert_all(Game.State.players(game_id), fn %Player{} ->
         true
       end)

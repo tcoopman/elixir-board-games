@@ -14,7 +14,7 @@ defmodule BoardGamesWeb.GameLive do
       {:ok,
        socket
        |> assign(
-         name: "Awesome game name",
+         name: name(game_id),
          game_id: game_id,
          status: :waiting_for_players,
          players: players(game_id),
@@ -77,9 +77,8 @@ defmodule BoardGamesWeb.GameLive do
     end
   end
 
-  defp players(game_id) do
-    Game.State.players(game_id)
-  end
+  defdelegate players(game_id), to: Game.State
+  defdelegate name(game_id), to: Game.State
 
   defp allowed_actions(game_id, player_id) do
     Game.State.allowed_actions(game_id, player_id)
