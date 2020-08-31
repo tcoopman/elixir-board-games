@@ -1,13 +1,17 @@
 # BoardGames
 
-To start your Phoenix server:
+## Development
 
-  * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.setup`
-  * Install Node.js dependencies with `npm install` inside the `assets` directory
-  * Start Phoenix endpoint with `mix phx.server`
+* Install dependencies with `mix deps.get` and `npm install --prefix assets`
+* run the database with `docker-compose up -d`
+* Create and migrate your database with `mix do ecto.setup, event_store.create, event_store.init`
+* Start Phoenix endpoint with `mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+
+### Reset the database
+
+`mix do ecto.drop, ecto.setup, event_store.drop, event_store.create, event_store.init, initial_dev_data`
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
