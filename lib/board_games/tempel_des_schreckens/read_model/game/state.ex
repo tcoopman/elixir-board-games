@@ -5,7 +5,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   alias BoardGames.TempelDesSchreckens.Event
   alias BoardGames.TempelDesSchreckens.ReadModel.Game
 
-  @type status :: :waiting_for_players | :can_be_started | :started | :in_round
+  @type status :: :waiting_for_players | :can_be_started | :playing
   @type joining_status :: :has_capacity | :full
 
   typedstruct enforce: true do
@@ -15,6 +15,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     field :game_id, String.t(), default: nil
     field :players, list(any()), default: []
     field :player_with_key, String.t(), default: nil
+    field :current_round, pos_integer(), default: nil
   end
 
   def start_link(_) do
@@ -55,7 +56,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.GameStarted{} = _event) do
     Agent.update(pid, fn state ->
-      %{state | status: :started, joining_status: :full}
+      %{state | status: :playing, joining_status: :full}
     end)
   end
 
@@ -70,8 +71,12 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   end
 
   def handle_event(pid, %Event.RoundStarted{} = _event) do
-    Agent.update(pid, fn state ->
-      %{state | status: :in_round}
+    Agent.update(pid, fn
+      %{current_round: nil} = state ->
+        %{state | current_round: 1}
+
+      %{current_round: current_round} = state ->
+        %{state | current_round: current_round + 1}
     end)
   end
 
@@ -97,22 +102,21 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
       end)
 
     if player_joined do
-      case status do
-        :waiting_for_players ->
+      cond do
+        status == :waiting_for_players ->
           [:cancel]
 
-        :can_be_started ->
+        status == :can_be_started ->
           [:cancel, :start]
 
-        :started ->
+        status == :playing && state.current_round == nil ->
           []
 
-        :in_round ->
-          if player_id == state.player_with_key do
-            [:open_room]
-          else
-            []
-          end
+        status == :playing && player_id == state.player_with_key ->
+          [:open_room]
+
+        true ->
+          []
       end
     else
       case joining_status do
