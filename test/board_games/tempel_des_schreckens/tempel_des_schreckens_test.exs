@@ -76,6 +76,7 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
     test "with a duplicate id" do
       game_id = "Game1"
+
       command = %Command.CreateGame{
         player_id: "player_id",
         game_id: game_id,
@@ -145,10 +146,13 @@ defmodule BoardGames.TempelDesSchreckensTest do
           player_id: player_id,
           game_id: game_id
         },
-        %Event.JoinedGame{
-          game_id: game_id,
-          player_id: player_id
-        }
+        [
+          %Event.JoinedGame{
+            game_id: game_id,
+            player_id: player_id
+          },
+          %Event.MaximumNumberOfPlayersJoined{game_id: game_id}
+        ]
       )
     end
 

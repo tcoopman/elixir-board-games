@@ -88,6 +88,10 @@ defmodule BoardGames.TempelDesSchreckens do
     game
   end
 
+  def apply(%TempelDesSchreckens{} = game, %Event.MaximumNumberOfPlayersJoined{}) do
+    game
+  end
+
   defp create_game(%TempelDesSchreckens{}, _, name) when not is_non_empty_string?(name),
     do: {:error, :invalid_name}
 
@@ -116,19 +120,26 @@ defmodule BoardGames.TempelDesSchreckens do
     if is_member do
       {:error, :player_already_joined}
     else
-      if number_of_players == 2 do
-        [
-          %Event.JoinedGame{
-            game_id: game.game_id,
-            player_id: player_id
-          },
-          %Event.GameCanBeStarted{game_id: game.game_id}
-        ]
-      else
-        %Event.JoinedGame{
-          game_id: game.game_id,
-          player_id: player_id
-        }
+      joined_game = %Event.JoinedGame{
+        game_id: game.game_id,
+        player_id: player_id
+      }
+
+      case number_of_players do
+        2 ->
+          [
+            joined_game,
+            %Event.GameCanBeStarted{game_id: game.game_id}
+          ]
+
+        9 ->
+          [
+            joined_game,
+            %Event.MaximumNumberOfPlayersJoined{game_id: game.game_id}
+          ]
+
+        _ ->
+          joined_game
       end
     end
   end
