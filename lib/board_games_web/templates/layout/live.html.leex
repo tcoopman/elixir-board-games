@@ -1,6 +1,7 @@
 <main role="main">
   <%= for {type, color} <- [error: "red", info: "indigo", success: "green"] do %>
     <div
+      class="fixed bottom-0 inset-x-0 pb-2 sm:pb-5"
       id="flash-<%= type %>"
       x-show="open"
       x-data="{open: <%= !!live_flash(@flash, type) %>}"
@@ -14,24 +15,32 @@
       x-transition:leave="transition ease-in duration-300 transform"
       x-transition:leave-start="opacity-100"
       x-transition:leave-end="opacity-0"
-      class="relative bg-<%= color %>-600"
       role="alert"
       phx-hook="Flash"
     >
-      <div class="max-w-screen-xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
-        <div class="pr-16 sm:text-center sm:px-16">
-          <p class="font-medium text-white">
-            <span>
-              <%= live_flash(@flash, type) %>
-            </span>
-          </p>
-        </div>
-        <div class="absolute inset-y-0 right-0 pt-1 pr-1 flex items-start sm:pt-1 sm:pr-2 sm:items-start">
-          <button @click="$dispatch('close-flash', {key: '<%= type %>', timeout: 300}); open = false" type="button" class="flex p-2 rounded-md hover:bg-<%= color %>-500 focus:outline-none focus:bg-<%= color %>-500 transition ease-in-out duration-150" aria-label="Dismiss">
-            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div class="max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8">
+        <div class="p-2 rounded-lg bg-<%= color %>-600 shadow-lg sm:p-3">
+          <div class="flex items-center justify-between flex-wrap">
+            <div class="w-0 flex-1 flex items-center">
+              <p class="ml-3 font-medium text-white truncate">
+                <span>
+                  <%= live_flash(@flash, type) %>
+                </span>
+              </p>
+            </div>
+            <div class="order-2 flex-shrink-0 sm:order-3 sm:ml-2">
+              <button
+                @click="$dispatch('close-flash', {key: '<%= type %>', timeout: 300}); open = false"
+                @click="type="button"
+                class="-mr-1 flex p-2 rounded-md hover:bg-<%= color %>-500 focus:outline-none focus:bg-<%= color %>-500 transition ease-in-out duration-150"
+                aria-label="Dismiss"
+              >
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
