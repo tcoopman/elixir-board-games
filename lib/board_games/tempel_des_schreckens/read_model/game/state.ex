@@ -58,27 +58,10 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
-  def name(game_id) do
-    Agent.get(pid(game_id), fn %Game.State{name: name} -> name end)
-  end
+  def get(game_id), do: Agent.get(pid(game_id), fn %Game.State{} = state -> state end)
 
-  def status(game_id) do
-    Agent.get(pid(game_id), fn %Game.State{status: status} ->
-      status
-    end)
-  end
-
-  def players(game_id) do
-    Agent.get(pid(game_id), fn %Game.State{players: players} ->
-      players
-    end)
-  end
-
-  def allowed_actions(game_id, player_id) do
-    {status, joining_status, players} =
-      Agent.get(pid(game_id), fn %Game.State{status: status, joining_status: joining_status, players: players} ->
-        {status, joining_status, players}
-      end)
+  def allowed_actions(%Game.State{} = state, player_id) do
+    {status, joining_status, players} = {state.status, state.joining_status, state.players}
 
     player_joined =
       Enum.any?(players, fn
@@ -88,19 +71,20 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
     if player_joined do
       case status do
-      :waiting_for_players -> [:cancel]
-      :can_be_started -> [:cancel, :start]
+        :waiting_for_players -> [:cancel]
+        :can_be_started -> [:cancel, :start]
       end
     else
-    case joining_status do
-      :has_capacity -> [:join]
-      :full -> []
+      case joining_status do
+        :has_capacity -> [:join]
+        :full -> []
+      end
     end
-    end
+    |> MapSet.new()
   end
 
   defp pid(game_id) do
-    {:ok, pid} =Game.Supervisor.state_by_game_id(game_id)
+    {:ok, pid} = Game.Supervisor.state_by_game_id(game_id)
     pid
   end
 end

@@ -3,8 +3,6 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
   use BoardGames.AggregateCase, aggregate: BoardGames.TempelDesSchreckens, async: false
 
   alias BoardGames.TempelDesSchreckens.ReadModel.Game
-  alias BoardGames.ReadModel.Player
-
   setup do
     game_id = UUID.uuid4()
     Game.Supervisor.start_event_handler(game_id)
@@ -24,11 +22,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert Game.State.status(game_id) == :waiting_for_players
-      assert Game.State.name(game_id) == name
-      assert_all(Game.State.players(game_id), fn %Player{} ->
-        true
-      end)
+      assert %Game.State{} = Game.State.get(game_id)
     end
   end
 
@@ -39,7 +33,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert Game.State.allowed_actions(game_id, player_id) == [:join]
+      assert allowed_actions(game_id, player_id) == [:join]
     end
 
     test "waiting for players and joined", %{game_id: game_id, pid: pid} do
@@ -48,7 +42,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert Game.State.allowed_actions(game_id, player_id) == [:cancel]
+      assert allowed_actions(game_id, player_id) == [:cancel]
     end
 
     test "game can be started and not joined", %{game_id: game_id, pid: pid} do
@@ -57,7 +51,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert Game.State.allowed_actions(game_id, player_id) == [:join]
+      assert allowed_actions(game_id, player_id) == [:join]
     end
 
     test "game can be started and joined", %{game_id: game_id, pid: pid} do
@@ -66,7 +60,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert Game.State.allowed_actions(game_id, player_id) == [:cancel, :start]
+      assert allowed_actions(game_id, player_id) == [:cancel, :start]
     end
 
     test "game has the maximum number of players", %{game_id: game_id, pid: pid} do
@@ -75,14 +69,15 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert Game.State.allowed_actions(game_id, player_id) == []
+      assert allowed_actions(game_id, player_id) == []
     end
   end
 
   defp handle_events(pid, events), do: Enum.each(events, &Game.State.handle_event(pid, &1))
 
-  defp assert_all(items, fun) do
-    assert Enum.count(items) > 0
-    assert Enum.all?(items, &fun.(&1))
+  defp allowed_actions(game_id, player_id) do
+    Game.State.get(game_id)
+    |> Game.State.allowed_actions(player_id)
+    |> MapSet.to_list()
   end
 end

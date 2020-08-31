@@ -10,16 +10,20 @@ defmodule BoardGamesWeb.GameLive do
   def mount(%{"id" => game_id}, _session, socket) do
     Registry.register(Registry.Events, {:game, game_id}, [])
 
-    with {:ok, _state_pid} <- Game.Supervisor.state_by_game_id(game_id) do
+    with {:ok, _state_pid} <- Game.Supervisor.state_by_game_id(game_id),
+         state = Game.State.get(game_id) do
+      player_id = "Player3"
+      allowed_actions = Game.State.allowed_actions(state, player_id)
+
       {:ok,
        socket
        |> assign(
-         name: name(game_id),
+         name: state.name,
          game_id: game_id,
-         status: :waiting_for_players,
-         players: players(game_id),
-         player_id: "Player3",
-         allowed_actions: allowed_actions(game_id, "Player3")
+         players: state.players,
+         player_id: player_id,
+         subtitle: subtitle(state.joining_status, allowed_actions),
+         allowed_actions: translate_allowed_actions(allowed_actions)
        )}
     else
       {:error, :game_not_found} ->
@@ -43,7 +47,7 @@ defmodule BoardGamesWeb.GameLive do
       {:noreply, socket}
     else
       {:error, error} ->
-        # TODO give a better error message
+        # TODO give a human readable error message
         {:noreply,
          socket
          |> put_flash(:error, error)}
@@ -54,34 +58,35 @@ defmodule BoardGamesWeb.GameLive do
   def handle_info({:game_updated, _state}, socket) do
     game_id = socket.assigns.game_id
     player_id = socket.assigns.player_id
+    state = Game.State.get(game_id)
+    allowed_actions = Game.State.allowed_actions(state, player_id)
 
     {:noreply,
      socket
-     |> assign(players: players(game_id), allowed_actions: allowed_actions(game_id, player_id))}
+     |> assign(
+       players: state.players,
+       allowed_actions: translate_allowed_actions(allowed_actions),
+       subtitle: subtitle(state.joining_status, allowed_actions)
+     )}
   end
 
-  def subtitle(status, allowed_actions) do
-    case status do
-      :waiting_for_players ->
-        can_join =
-          Enum.any?(allowed_actions, fn
-            %{action: "join_game"} -> true
-            _ -> false
-          end)
+  def subtitle(joining_status, allowed_actions) do
+    can_join = MapSet.member?(allowed_actions, :join)
 
-        if can_join do
-          "Your are a currently a spectator, click join to enter the game"
-        else
-          "The game is waiting for more players"
-        end
+    cond do
+      can_join ->
+        "Your are a currently a spectator, click join to enter the game"
+
+      joining_status == :full ->
+        "You are a spectator, enjoy watching the game"
+
+      joining_status == :has_capacity ->
+        "The game is waiting for more players"
     end
   end
 
-  defdelegate players(game_id), to: Game.State
-  defdelegate name(game_id), to: Game.State
-
-  defp allowed_actions(game_id, player_id) do
-    Game.State.allowed_actions(game_id, player_id)
+  defp translate_allowed_actions(allowed_actions) do
+    allowed_actions
     |> Enum.map(fn
       :join ->
         %{
