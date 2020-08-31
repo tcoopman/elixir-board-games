@@ -6,10 +6,12 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   alias BoardGames.TempelDesSchreckens.ReadModel.Game
 
   @type status :: :waiting_for_players | :can_be_started
+  @type joining_status :: :has_capacity | :full
 
   typedstruct enforce: true do
     field :name, String.t(), default: nil
     field :status, status(), default: :waiting_for_players
+    field :joining_status, joining_status(), default: :has_capacity
     field :game_id, String.t(), default: nil
     field :players, list(any()), default: []
   end
@@ -50,6 +52,12 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
+  def handle_event(pid, %Event.MaximumNumberOfPlayersJoined{} = _event) do
+    Agent.update(pid, fn state ->
+      %{state | joining_status: :full}
+    end)
+  end
+
   def name(game_id) do
     Agent.get(pid(game_id), fn %Game.State{name: name} -> name end)
   end
@@ -67,9 +75,9 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   end
 
   def allowed_actions(game_id, player_id) do
-    {status, players} =
-      Agent.get(pid(game_id), fn %Game.State{status: status, players: players} ->
-        {status, players}
+    {status, joining_status, players} =
+      Agent.get(pid(game_id), fn %Game.State{status: status, joining_status: joining_status, players: players} ->
+        {status, joining_status, players}
       end)
 
     player_joined =
@@ -78,12 +86,16 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
         _ -> false
       end)
 
-    case {status, player_joined} do
-      {:waiting_for_players, false} -> [:join]
-      {:waiting_for_players, true} -> [:cancel]
-      {:can_be_started, false} -> [:join]
-      {:can_be_started, true} -> [:cancel, :start]
-      _ -> []
+    if player_joined do
+      case status do
+      :waiting_for_players -> [:cancel]
+      :can_be_started -> [:cancel, :start]
+      end
+    else
+    case joining_status do
+      :has_capacity -> [:join]
+      :full -> []
+    end
     end
   end
 

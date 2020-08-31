@@ -69,6 +69,14 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
       assert Game.State.allowed_actions(game_id, player_id) == [:cancel, :start]
     end
 
+    test "game has the maximum number of players", %{game_id: game_id, pid: pid} do
+      {events, _opts} = BoardGames.Test.Stories.with_maximum_number_of_players_joined(game_id: game_id)
+      player_id = "not joined"
+
+      handle_events(pid, events)
+
+      assert Game.State.allowed_actions(game_id, player_id) == []
+    end
   end
 
   defp handle_events(pid, events), do: Enum.each(events, &Game.State.handle_event(pid, &1))

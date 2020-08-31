@@ -21,6 +21,25 @@ defmodule BoardGames.Test.Stories do
     |> create_events(opts)
   end
 
+  def with_maximum_number_of_players_joined(opts \\ []) do
+    [
+      &game_created/1,
+      &joined_game/1,
+      &joined_game/1,
+      &joined_game/1,
+      &game_can_be_started/1,
+      &joined_game/1,
+      &joined_game/1,
+      &joined_game/1,
+      &joined_game/1,
+      &joined_game/1,
+      &joined_game/1,
+      &joined_game/1,
+      &maximum_number_of_players_joined/1,
+    ]
+    |> create_events(opts)
+  end
+
   defp game_created(opts) do
     game_id = Keyword.fetch!(opts, :game_id)
     game_name = Keyword.fetch!(opts, :game_name)
@@ -49,7 +68,16 @@ defmodule BoardGames.Test.Stories do
      }, opts}
   end
 
+  defp maximum_number_of_players_joined(opts) do
+    game_id = Keyword.fetch!(opts, :game_id)
+
+    {%Event.MaximumNumberOfPlayersJoined{
+       game_id: game_id,
+     }, opts}
+  end
+
   defp create_events(events, opts) do
+
     initial_opts = set_opts(opts)
 
     {events, _opts} = Enum.reduce(events, {[], initial_opts}, fn fun, {events, opts} ->
