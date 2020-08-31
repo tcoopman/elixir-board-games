@@ -3,10 +3,14 @@ defmodule BoardGames.TempelDesSchreckens.Event.RolesDealt do
 
   @derive Jason.Encoder
 
-  @type role :: :adventurer | :guardian
+  @typedoc """
+  "adventurer" | "guardina"
+  """
+  @type role :: String.t()
+  @type player_id :: String.t()
 
   typedstruct enforce: true do
     field :game_id, String.t()
-    field :roles, list({String.t(), role()}), default: []
+    field :roles, Map.t(player_id(), role())
   end
 end

@@ -169,14 +169,15 @@ defmodule BoardGames.TempelDesSchreckens do
         10 -> {7, 4}
       end
 
-    adventures = for _ <- 1..nb_of_adventures, do: :adventurer
-    guardians = for _ <- 1..nb_of_guardians, do: :guardian
+    adventures = for _ <- 1..nb_of_adventures, do: "adventurer"
+    guardians = for _ <- 1..nb_of_guardians, do: "guardian"
     initial_cards = adventures ++ guardians
 
     roles =
       initial_cards
       |> Enum.take_random(nb_of_players)
       |> Enum.zip(players, ...)
+      |> Map.new()
 
     %Event.RolesDealt{game_id: game.game_id, roles: roles}
   end
@@ -209,9 +210,9 @@ defmodule BoardGames.TempelDesSchreckens do
         10 -> {10, 3}
       end
 
-    treasures = for _ <- 1..nb_of_treasures, do: :treasure
-    traps = for _ <- 1..nb_of_traps, do: :trap
-    empty = for _ <- 1..(nb_of_players * 5 - nb_of_traps - nb_of_treasures), do: :empty
+    treasures = for _ <- 1..nb_of_treasures, do: "treasure"
+    traps = for _ <- 1..nb_of_traps, do: "trap"
+    empty = for _ <- 1..(nb_of_players * 5 - nb_of_traps - nb_of_treasures), do: "empty"
     initial_cards = traps ++ treasures ++ empty
 
     rooms = initial_cards |> Enum.shuffle() |> Enum.chunk_every(5)
@@ -219,6 +220,7 @@ defmodule BoardGames.TempelDesSchreckens do
     rooms =
       rooms
       |> Enum.zip(players, ...)
+      |> Map.new()
 
     %Event.RoomsDealt{game_id: game.game_id, rooms: rooms}
   end

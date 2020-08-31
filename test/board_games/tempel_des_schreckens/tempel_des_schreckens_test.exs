@@ -309,12 +309,10 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
   defp game_started(%Event.GameStarted{}), do: true
 
-  defp roles_dealt(%Event.RolesDealt{roles: roles}) do
-    refute Enum.empty?(roles)
-
-    assert Enum.each(roles, fn
-             {_, :guardian} -> true
-             {_, :adventurer} -> true
+  defp roles_dealt(%Event.RolesDealt{roles: roles}) when is_map(roles) do
+    assert Enum.each(Map.values(roles), fn
+             "guardian" -> true
+             "adventurer" -> true
            end)
   end
 
@@ -322,17 +320,15 @@ defmodule BoardGames.TempelDesSchreckensTest do
 
   defp round_started(%Event.RoundStarted{}), do: true
 
-  defp rooms_dealt(%Event.RoomsDealt{rooms: rooms}, expected_nb_of_rooms) do
-    refute Enum.empty?(rooms)
-
-    assert Enum.each(rooms, fn
-             {_, rooms} ->
+  defp rooms_dealt(%Event.RoomsDealt{rooms: rooms}, expected_nb_of_rooms) when is_map(rooms) do
+    assert Enum.each(Map.values(rooms), fn
+             rooms ->
                assert Enum.count(rooms) == expected_nb_of_rooms
 
                Enum.each(rooms, fn
-                 :treasure -> true
-                 :trap -> true
-                 :empty -> true
+                 "treasure" -> true
+                 "trap" -> true
+                 "empty" -> true
                end)
            end)
   end

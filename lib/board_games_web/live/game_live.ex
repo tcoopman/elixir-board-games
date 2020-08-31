@@ -55,6 +55,24 @@ defmodule BoardGamesWeb.GameLive do
   end
 
   @impl true
+  def handle_event("start_game", %{}, socket) do
+    game_id = socket.assigns.game_id
+
+    with :ok <-
+           BoardGames.App.dispatch(%BoardGames.TempelDesSchreckens.Command.StartGame{
+             game_id: game_id
+           }) do
+      {:noreply, socket}
+    else
+      {:error, error} ->
+        # TODO give a human readable error message
+        {:noreply,
+         socket
+         |> put_flash(:error, error)}
+    end
+  end
+
+  @impl true
   def handle_info({:game_updated, _state}, socket) do
     game_id = socket.assigns.game_id
     player_id = socket.assigns.player_id
@@ -71,6 +89,8 @@ defmodule BoardGamesWeb.GameLive do
   end
 
   def subtitle(joining_status, allowed_actions) do
+    # TODO this is wrong -> if it's full but you have joined
+    # then the text is wrong
     can_join = MapSet.member?(allowed_actions, :join)
 
     cond do

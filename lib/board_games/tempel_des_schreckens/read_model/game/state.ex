@@ -5,7 +5,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   alias BoardGames.TempelDesSchreckens.Event
   alias BoardGames.TempelDesSchreckens.ReadModel.Game
 
-  @type status :: :waiting_for_players | :can_be_started
+  @type status :: :waiting_for_players | :can_be_started | :started | :in_round
   @type joining_status :: :has_capacity | :full
 
   typedstruct enforce: true do
@@ -14,6 +14,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     field :joining_status, joining_status(), default: :has_capacity
     field :game_id, String.t(), default: nil
     field :players, list(any()), default: []
+    field :player_with_key, String.t(), default: nil
   end
 
   def start_link(_) do
@@ -52,6 +53,32 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
+  def handle_event(pid, %Event.GameStarted{} = _event) do
+    Agent.update(pid, fn state ->
+      %{state | status: :started, joining_status: :full}
+    end)
+  end
+
+  def handle_event(_pid, %Event.RolesDealt{} = _event) do
+    :ok
+  end
+
+  def handle_event(pid, %Event.ReceivedKey{player_id: player_id} = _event) do
+    Agent.update(pid, fn state ->
+      %{state | player_with_key: player_id}
+    end)
+  end
+
+  def handle_event(pid, %Event.RoundStarted{} = _event) do
+    Agent.update(pid, fn state ->
+      %{state | status: :in_round}
+    end)
+  end
+
+  def handle_event(_pid, %Event.RoomsDealt{} = _event) do
+    :ok
+  end
+
   def handle_event(pid, %Event.MaximumNumberOfPlayersJoined{} = _event) do
     Agent.update(pid, fn state ->
       %{state | joining_status: :full}
@@ -71,8 +98,21 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
     if player_joined do
       case status do
-        :waiting_for_players -> [:cancel]
-        :can_be_started -> [:cancel, :start]
+        :waiting_for_players ->
+          [:cancel]
+
+        :can_be_started ->
+          [:cancel, :start]
+
+        :started ->
+          []
+
+        :in_round ->
+          if player_id == state.player_with_key do
+            [:open_room]
+          else
+            []
+          end
       end
     else
       case joining_status do
