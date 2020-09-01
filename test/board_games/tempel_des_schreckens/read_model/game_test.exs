@@ -26,7 +26,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       handle_events(pid, events)
 
-      assert %Game.State{} = Game.State.get(game_id)
+      assert {%Game.State{}, %Game.State.PlayerState{}} = Game.State.get(game_id, "some player")
     end
   end
 
@@ -106,8 +106,9 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
         %Event.ReceivedKey{
           game_id: game_id,
           player_id: player_id
-        },
+        }
       ]
+
       handle_events(pid, new_events)
 
       assert allowed_actions(game_id, player_id) == []
@@ -135,6 +136,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
           game_id: game_id
         }
       ]
+
       handle_events(pid, new_events)
 
       assert allowed_actions(game_id, player_id) == [:open_room]
@@ -144,8 +146,8 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
   defp handle_events(pid, events), do: Enum.each(events, &Game.State.handle_event(pid, &1))
 
   defp allowed_actions(game_id, player_id) do
-    Game.State.get(game_id)
-    |> Game.State.allowed_actions(player_id)
-    |> MapSet.to_list()
+    {_, player_state} = Game.State.get(game_id, player_id)
+
+    player_state.allowed_actions |> MapSet.to_list()
   end
 end

@@ -10,21 +10,10 @@ defmodule BoardGamesWeb.GameLive do
   def mount(%{"id" => game_id}, _session, socket) do
     Registry.register(Registry.Events, {:game, game_id}, [])
 
-    with {:ok, _state_pid} <- Game.Supervisor.state_by_game_id(game_id),
-         state = Game.State.get(game_id) do
-      player_id = "Player3"
-      allowed_actions = Game.State.allowed_actions(state, player_id)
+    player_id = "Player3"
 
-      {:ok,
-       socket
-       |> assign(
-         name: state.name,
-         game_id: game_id,
-         players: state.players,
-         player_id: player_id,
-         subtitle: subtitle(state.joining_status, allowed_actions),
-         allowed_actions: translate_allowed_actions(allowed_actions)
-       )}
+    with {:ok, _state_pid} <- Game.Supervisor.state_by_game_id(game_id) do
+      {:ok, assign_game(socket, game_id, player_id)}
     else
       {:error, :game_not_found} ->
         {:ok,
@@ -76,32 +65,33 @@ defmodule BoardGamesWeb.GameLive do
   def handle_info({:game_updated, _state}, socket) do
     game_id = socket.assigns.game_id
     player_id = socket.assigns.player_id
-    state = Game.State.get(game_id)
-    allowed_actions = Game.State.allowed_actions(state, player_id)
 
-    {:noreply,
-     socket
-     |> assign(
-       players: state.players,
-       allowed_actions: translate_allowed_actions(allowed_actions),
-       subtitle: subtitle(state.joining_status, allowed_actions)
-     )}
+    {:noreply, assign_game(socket, game_id, player_id)}
   end
 
-  def subtitle(joining_status, allowed_actions) do
-    # TODO this is wrong -> if it's full but you have joined
-    # then the text is wrong
-    can_join = MapSet.member?(allowed_actions, :join)
+  def subtitle(%Game.State{} = state, %Game.State.PlayerState{} = player_state) do
+    if player_state.joined do
+      case {state.status, state.accepting_players} do
+        {:can_be_started, true} ->
+          "You can wait for more players, or start the game"
 
-    cond do
-      can_join ->
-        "Your are a currently a spectator, click join to enter the game"
+        {:can_be_started, false} ->
+          "No more players can join. The game is ready to start"
 
-      joining_status == :full ->
-        "You are a spectator, enjoy watching the game"
+        {:playing, _} ->
+          "The game is in progress"
 
-      joining_status == :has_capacity ->
-        "The game is waiting for more players"
+        {:waiting_for_players, _} ->
+          "The game is waiting for more players"
+      end
+    else
+      cond do
+        state.accepting_players ->
+          "Your are a currently a spectator, click join to enter the game"
+
+        true ->
+          "You are a spectator, enjoy watching the game"
+      end
     end
   end
 
@@ -132,5 +122,20 @@ defmodule BoardGamesWeb.GameLive do
           type: :primary
         }
     end)
+  end
+
+  defp assign_game(socket, game_id, player_id) do
+    with {%Game.State{} = state, %Game.State.PlayerState{} = player_state} <-
+           Game.State.get(game_id, player_id) do
+      socket
+      |> assign(
+        name: state.name,
+        game_id: game_id,
+        players: state.players |> Map.values(),
+        player_id: player_id,
+        subtitle: subtitle(state, player_state),
+        allowed_actions: translate_allowed_actions(player_state.allowed_actions)
+      )
+    end
   end
 end

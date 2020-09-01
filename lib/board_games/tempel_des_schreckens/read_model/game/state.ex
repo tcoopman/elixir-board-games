@@ -12,9 +12,19 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     field :status, status(), default: :waiting_for_players
     field :accepting_players, boolean(), default: false
     field :game_id, String.t(), default: nil
-    field :players, list(any()), default: []
+    field :players, Map.t(String.t(), BoardGames.ReadModel.Player.t()), default: Map.new()
     field :player_with_key, String.t(), default: nil
     field :current_round, pos_integer(), default: nil
+  end
+
+  defmodule PlayerState do
+    use TypedStruct
+
+    typedstruct enforce: true do
+      field :id, String.t()
+      field :allowed_actions, MapSet.t(atom())
+      field :joined, boolean()
+    end
   end
 
   def start_link(_) do
@@ -23,7 +33,12 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.GameCreated{game_id: game_id, name: name} = _event) do
     Agent.update(pid, fn state ->
-      %{state | game_id: game_id, name: name, accepting_players: true}
+      %{
+        state
+        | game_id: game_id,
+          name: name,
+          accepting_players: true
+      }
     end)
   end
 
@@ -43,7 +58,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
             }
         end
 
-      %{state | players: [player | state.players]}
+      %{state | players: Map.put(state.players, player_id, player)}
     end)
   end
 
@@ -55,7 +70,11 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.GameStarted{} = _event) do
     Agent.update(pid, fn state ->
-      %{state | status: :playing, accepting_players: false}
+      %{
+        state
+        | status: :playing,
+          accepting_players: false
+      }
     end)
   end
 
@@ -89,16 +108,26 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
-  def get(game_id), do: Agent.get(pid(game_id), fn %Game.State{} = state -> state end)
-
-  def allowed_actions(%Game.State{} = state, player_id) do
-    {status, accepting_players, players} = {state.status, state.accepting_players, state.players}
-
-    player_joined =
-      Enum.any?(players, fn
-        %{id: ^player_id} -> true
-        _ -> false
+  def get(game_id, player_id),
+    do:
+      Agent.get(pid(game_id), fn %Game.State{} = state ->
+        {state, calculate_player_state(state, player_id)}
       end)
+
+  defp calculate_player_state(%Game.State{} = state, player_id) do
+    %PlayerState{
+      id: player_id,
+      allowed_actions: allowed_actions(state, player_id),
+      joined: Map.has_key?(state.players, player_id)
+    }
+  end
+
+  defp allowed_actions(
+        %Game.State{status: status, accepting_players: accepting_players, players: players} =
+          state,
+        player_id
+      ) do
+    player_joined = Map.has_key?(players, player_id)
 
     if player_joined do
       cond do
