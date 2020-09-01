@@ -130,6 +130,7 @@ defmodule BoardGamesWeb.GameLive do
       socket
       |> assign(
         name: state.name,
+        status: :playing,
         game_id: game_id,
         players: state.players |> Map.values(),
         player_id: player_id,
