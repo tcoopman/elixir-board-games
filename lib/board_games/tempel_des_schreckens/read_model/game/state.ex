@@ -6,12 +6,11 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   alias BoardGames.TempelDesSchreckens.ReadModel.Game
 
   @type status :: :waiting_for_players | :can_be_started | :playing
-  @type joining_status :: :has_capacity | :full
 
   typedstruct enforce: true do
     field :name, String.t(), default: nil
     field :status, status(), default: :waiting_for_players
-    field :joining_status, joining_status(), default: :has_capacity
+    field :accepting_players, boolean(), default: false
     field :game_id, String.t(), default: nil
     field :players, list(any()), default: []
     field :player_with_key, String.t(), default: nil
@@ -24,7 +23,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.GameCreated{game_id: game_id, name: name} = _event) do
     Agent.update(pid, fn state ->
-      %{state | game_id: game_id, name: name}
+      %{state | game_id: game_id, name: name, accepting_players: true}
     end)
   end
 
@@ -56,7 +55,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.GameStarted{} = _event) do
     Agent.update(pid, fn state ->
-      %{state | status: :playing, joining_status: :full}
+      %{state | status: :playing, accepting_players: false}
     end)
   end
 
@@ -86,14 +85,14 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.MaximumNumberOfPlayersJoined{} = _event) do
     Agent.update(pid, fn state ->
-      %{state | joining_status: :full}
+      %{state | accepting_players: false}
     end)
   end
 
   def get(game_id), do: Agent.get(pid(game_id), fn %Game.State{} = state -> state end)
 
   def allowed_actions(%Game.State{} = state, player_id) do
-    {status, joining_status, players} = {state.status, state.joining_status, state.players}
+    {status, accepting_players, players} = {state.status, state.accepting_players, state.players}
 
     player_joined =
       Enum.any?(players, fn
@@ -119,9 +118,10 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
           []
       end
     else
-      case joining_status do
-        :has_capacity -> [:join]
-        :full -> []
+      if accepting_players do
+        [:join]
+      else
+        []
       end
     end
     |> MapSet.new()
