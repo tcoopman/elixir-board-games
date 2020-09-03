@@ -132,11 +132,28 @@ defmodule BoardGamesWeb.GameLive do
         name: state.name,
         status: :playing,
         game_id: game_id,
-        players: state.players |> Map.values(),
+        players: state.players |> Map.values() |> translate_players(),
         player_id: player_id,
         subtitle: subtitle(state, player_state),
         allowed_actions: translate_allowed_actions(player_state.allowed_actions)
       )
     end
   end
+
+  defp translate_players(players) do
+    Enum.map(players, fn player ->
+      Map.from_struct(player)
+      |> Map.put(:cards, cards())
+    end)
+  end
+
+  defp cards(),
+    do:
+      for(
+        _ <- 1..5,
+        do: %{
+          image_url: "/images/closed_room.png",
+          alt_text: "Closed Room"
+        }
+      )
 end
