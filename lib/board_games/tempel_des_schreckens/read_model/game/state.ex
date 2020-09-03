@@ -12,7 +12,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     field :status, status(), default: :waiting_for_players
     field :accepting_players, boolean(), default: false
     field :game_id, String.t(), default: nil
-    field :players, Map.t(String.t(), BoardGames.ReadModel.Player.t()), default: Map.new()
+    field :players, Map.t(String.t(), PublicPlayerState.t()), default: Map.new()
     field :player_with_key, String.t(), default: nil
     field :current_round, pos_integer(), default: nil
   end
@@ -24,6 +24,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
       field :id, String.t()
       field :player_info, BoardGames.ReadModel.Player.t()
       field :has_key, boolean(), default: false
+      field :rooms, list(atom()), default: []
     end
   end
 
@@ -114,8 +115,17 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
-  def handle_event(_pid, %Event.RoomsDealt{} = _event) do
-    :ok
+  def handle_event(pid, %Event.RoomsDealt{rooms: rooms} = _event) do
+    Agent.update(pid, fn state ->
+      players =
+        Enum.map(state.players, fn {player_id, %PublicPlayerState{} = player_state} ->
+          rooms = Map.fetch!(rooms, player_id) |> Enum.map(fn _ -> :closed end)
+          {player_id, %{player_state | rooms: rooms}}
+        end)
+        |> Map.new()
+
+      %{state | players: players}
+    end)
   end
 
   def handle_event(pid, %Event.MaximumNumberOfPlayersJoined{} = _event) do

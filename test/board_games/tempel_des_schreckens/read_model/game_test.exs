@@ -153,11 +153,21 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
       players = Map.values(state.players)
 
       assert Enum.count(players) > 0
+
       assert Enum.all?(players, fn %Game.State.PublicPlayerState{} ->
-        true
-      end)
+               true
+             end)
 
       assert Enum.any?(players, fn %{has_key: has_key} -> has_key end)
+
+      assert Enum.all?(players, fn %{rooms: rooms} ->
+               assert Enum.count(rooms) == 5
+
+               assert Enum.all?(rooms, fn
+                        :closed -> true
+                        _ -> false
+                      end)
+             end)
     end
   end
 

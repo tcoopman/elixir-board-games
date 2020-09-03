@@ -33,7 +33,10 @@ defmodule EventStore.JsonbSerializer do
 
   defp keys_to_atoms(map) when is_map(map) do
     for {key, value} <- map, into: %{} do
-      {String.to_atom(key), keys_to_atoms(value)}
+      # TODO: check out if it's safe to not map to atom here.
+      # I think it's safe, as long as you don't try to store atoms in
+      # the DB
+      {String.to_atom(key), value}
     end
   end
 

@@ -14,8 +14,8 @@
 
       <div class="flex-1 flex flex-col">
         <div class="mt-1 p-4 flex-none grid grid-cols-3 gap-1 grid-flow-row-dense">
-          <%= for card <- player.cards do %>
-            <img src="<%= card.image_url %>" alt="<%= card.alt_text %>">
+          <%= for room <- player.rooms do %>
+            <img src="<%= room.image_url %>" alt="<%= room.alt_text %>">
           <% end %>
         </div>
       </div>

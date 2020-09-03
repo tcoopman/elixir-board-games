@@ -11,6 +11,6 @@ defmodule BoardGames.TempelDesSchreckens.Event.RoomsDealt do
 
   typedstruct enforce: true do
     field :game_id, String.t()
-    field :rooms, Map.t(player_id(), room())
+    field :rooms, Map.t(player_id(), list(room()))
   end
 end

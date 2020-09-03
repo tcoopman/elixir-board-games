@@ -151,18 +151,18 @@ defmodule BoardGamesWeb.GameLive do
         bio: player.player_info.bio,
         picture_url: player.player_info.picture_url,
         has_key: player.has_key,
-        cards: cards()
+        rooms: player.rooms |> translate_rooms()
       }
     end)
   end
 
-  defp cards(),
+  defp translate_rooms(rooms),
     do:
-      for(
-        _ <- 1..5,
-        do: %{
-          image_url: "/images/closed_room.png",
-          alt_text: "Closed Room"
-        }
-      )
+      Enum.map(rooms, fn
+        :closed ->
+          %{
+            image_url: "/images/closed_room.png",
+            alt_text: "Closed Room"
+          }
+      end)
 end

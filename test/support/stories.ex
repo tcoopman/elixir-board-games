@@ -124,7 +124,11 @@ defmodule BoardGames.Test.Stories do
 
     {%Event.RoomsDealt{
        game_id: game_id,
-       rooms: %{}
+       rooms: %{
+         "Player1" => ["treaure" , "empty" , "empty" , "trap" , "empty"],
+         "Player2" => ["treaure" , "empty" , "empty" , "trap" , "empty"],
+         "Player3" => ["treaure" , "empty" , "empty" , "trap" , "empty"],
+       }
      }, opts}
   end
 
