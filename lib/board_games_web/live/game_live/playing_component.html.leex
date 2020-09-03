@@ -4,7 +4,9 @@
       <div class="border-b border-gray-200 flex flex-1 p-4 justify-start align-top">
         <div class="relative">
           <img class="w-32 h-32 flex-shrink-0 bg-black rounded-md" src="<%= player.picture_url %>" alt="">
+          <%= if player.has_key do %>
           <img class="absolute w-16 h-16 bottom-0 right-0 -m-2" src="/images/key_circle.png" alt="">
+          <% end %>
         </div>
         <h3 class="pl-4 text-gray-900 text-md leading-5 font-medium"><%= player.name %></h3>
       </div>

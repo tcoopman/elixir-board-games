@@ -17,6 +17,16 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     field :current_round, pos_integer(), default: nil
   end
 
+  defmodule PublicPlayerState do
+    use TypedStruct
+
+    typedstruct enforce: true do
+      field :id, String.t()
+      field :player_info, BoardGames.ReadModel.Player.t()
+      field :has_key, boolean(), default: false
+    end
+  end
+
   defmodule PlayerState do
     use TypedStruct
 
@@ -44,7 +54,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.JoinedGame{player_id: player_id} = _event) do
     Agent.update(pid, fn state ->
-      player =
+      player_info =
         with {:ok, player} <- BoardGames.ReadModel.Players.by_id(player_id) do
           player
         else
@@ -58,7 +68,12 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
             }
         end
 
-      %{state | players: Map.put(state.players, player_id, player)}
+      public_player = %PublicPlayerState{
+        id: player_id,
+        player_info: player_info
+      }
+
+      %{state | players: Map.put(state.players, player_id, public_player)}
     end)
   end
 
@@ -84,7 +99,8 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.ReceivedKey{player_id: player_id} = _event) do
     Agent.update(pid, fn state ->
-      %{state | player_with_key: player_id}
+      players = Map.update!(state.players, player_id, fn player -> %{player | has_key: true} end)
+      %{state | player_with_key: player_id, players: players}
     end)
   end
 
@@ -123,10 +139,10 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   end
 
   defp allowed_actions(
-        %Game.State{status: status, accepting_players: accepting_players, players: players} =
-          state,
-        player_id
-      ) do
+         %Game.State{status: status, accepting_players: accepting_players, players: players} =
+           state,
+         player_id
+       ) do
     player_joined = Map.has_key?(players, player_id)
 
     if player_joined do

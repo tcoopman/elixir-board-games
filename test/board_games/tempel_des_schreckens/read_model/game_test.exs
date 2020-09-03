@@ -141,6 +141,24 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.GameTest do
 
       assert allowed_actions(game_id, player_id) == [:open_room]
     end
+
+    test "public player state", %{game_id: game_id, pid: pid} do
+      {events, opts} = BoardGames.Test.Stories.game_in_progress_with_3_players(game_id: game_id)
+      handle_events(pid, events)
+
+      player_id = Keyword.fetch!(opts, :player_id)
+
+      {state, _} = Game.State.get(game_id, player_id)
+
+      players = Map.values(state.players)
+
+      assert Enum.count(players) > 0
+      assert Enum.all?(players, fn %Game.State.PublicPlayerState{} ->
+        true
+      end)
+
+      assert Enum.any?(players, fn %{has_key: has_key} -> has_key end)
+    end
   end
 
   defp handle_events(pid, events), do: Enum.each(events, &Game.State.handle_event(pid, &1))

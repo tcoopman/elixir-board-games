@@ -106,7 +106,7 @@ defmodule BoardGames.Test.Stories do
 
     {%Event.ReceivedKey{
        game_id: game_id,
-       player_id: "TODO"
+       player_id: "Player1"
      }, opts}
   end
 
