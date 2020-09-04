@@ -69,9 +69,9 @@ defmodule BoardGamesWeb.GameLive do
     {:noreply, assign_game(socket, game_id, player_id)}
   end
 
-  def subtitle(%Game.State{} = state, %Game.State.PlayerState{} = player_state) do
-    if player_state.joined do
-      case {state.status, state.accepting_players} do
+  def subtitle(joined, status, accepting_players) do
+    if joined do
+      case {status, accepting_players} do
         {:can_be_started, true} ->
           "You can wait for more players, or start the game"
 
@@ -86,7 +86,7 @@ defmodule BoardGamesWeb.GameLive do
       end
     else
       cond do
-        state.accepting_players ->
+        accepting_players ->
           "Your are a currently a spectator, click join to enter the game"
 
         true ->
@@ -125,33 +125,44 @@ defmodule BoardGamesWeb.GameLive do
   end
 
   defp assign_game(socket, game_id, player_id) do
-    with {%Game.State{} = state, %Game.State.PlayerState{} = player_state} <-
-           Game.State.get(game_id, player_id) do
-      socket
-      |> assign(
-        name: state.name,
-        status: state.status,
-        game_id: game_id,
-        players: state.players |> translate_players(),
-        player_id: player_id,
-        subtitle: subtitle(state, player_state),
-        allowed_actions: translate_allowed_actions(player_state.allowed_actions),
-        player_with_key: state.player_with_key
-      )
-    end
+    state = Game.State.get(game_id, player_id)
+
+    joined = Map.has_key?(state.joined_players, player_id)
+    players = translate_players(state.joined_players, state.state_of_players)
+
+    socket
+    |> assign(
+      name: state.name,
+      status: state.status,
+      game_id: game_id,
+      players: players,
+      player_id: player_id,
+      subtitle: subtitle(joined, state.status, state.accepting_players),
+      allowed_actions: translate_allowed_actions(state.allowed_actions)
+    )
   end
 
-  defp translate_players(players) do
+  defp translate_players(players, state_of_players) do
+    state_of_players = state_of_players || []
+
     players
-    |> Map.values()
-    |> Enum.map(fn player ->
+    |> Map.keys()
+    |> Enum.map(fn player_id ->
+      player = Map.fetch!(players, player_id)
+
+      state =
+        Enum.find(state_of_players, %{}, fn
+          %{id: ^player_id} -> true
+          _ -> false
+        end)
+
       %{
         id: player.id,
-        name: player.player_info.name,
-        bio: player.player_info.bio,
-        picture_url: player.player_info.picture_url,
-        has_key: player.has_key,
-        rooms: player.rooms |> translate_rooms()
+        name: player.name,
+        bio: player.bio,
+        picture_url: player.picture_url,
+        has_key: Map.get(state, :has_key),
+        rooms: Map.get(state, :rooms, []) |> translate_rooms()
       }
     end)
   end

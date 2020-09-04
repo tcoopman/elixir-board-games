@@ -94,10 +94,11 @@ defmodule BoardGames.Test.Stories do
 
   defp roles_dealt(opts) do
     game_id = Keyword.fetch!(opts, :game_id)
+    roles = Keyword.fetch!(opts, :roles)
 
     {%Event.RolesDealt{
        game_id: game_id,
-       roles: %{}
+       roles: roles
      }, opts}
   end
 
@@ -121,15 +122,11 @@ defmodule BoardGames.Test.Stories do
 
   defp rooms_dealt(opts) do
     game_id = Keyword.fetch!(opts, :game_id)
+    rooms = Keyword.fetch!(opts, :rooms)
 
     {%Event.RoomsDealt{
        game_id: game_id,
-       rooms: %{
-         "Player1" => ["treaure" , "empty" , "empty" , "trap" , "empty"],
-         "Player2" => ["treaure" , "empty" , "empty" , "trap" , "empty"],
-         "Player3" => ["treaure" , "empty" , "empty" , "trap" , "empty"],
-       }
-     }, opts}
+       rooms: rooms     }, opts}
   end
 
   defp maximum_number_of_players_joined(opts) do

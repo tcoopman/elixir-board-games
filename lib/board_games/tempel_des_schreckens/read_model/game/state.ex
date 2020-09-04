@@ -8,13 +8,15 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
   @type status :: :waiting_for_players | :can_be_started | :playing
 
   typedstruct enforce: true do
+    field :game_id, String.t(), default: nil
     field :name, String.t(), default: nil
     field :status, status(), default: :waiting_for_players
     field :accepting_players, boolean(), default: false
-    field :game_id, String.t(), default: nil
-    field :players, Map.t(String.t(), PublicPlayerState.t()), default: Map.new()
+    field :players, Map.t(String.t(), BoardGames.ReadModel.Player.t()), default: Map.new()
     field :player_with_key, String.t(), default: nil
     field :current_round, pos_integer(), default: nil
+    field :rooms, Map.t(String.t(), {atom(), atom()}), default: Map.new()
+    field :roles, Map.t(String.t(), atom()), default: Map.new()
   end
 
   defmodule PublicPlayerState do
@@ -22,19 +24,21 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
     typedstruct enforce: true do
       field :id, String.t()
-      field :player_info, BoardGames.ReadModel.Player.t()
       field :has_key, boolean(), default: false
       field :rooms, list(atom()), default: []
     end
   end
 
-  defmodule PlayerState do
+  defmodule PrivatePlayerState do
     use TypedStruct
 
     typedstruct enforce: true do
       field :id, String.t()
-      field :allowed_actions, MapSet.t(atom())
-      field :joined, boolean()
+      field :role, atom()
+      field :treasures, pos_integer()
+      field :traps, pos_integer()
+      field :empties, pos_integer()
+      field :can_open_room, boolean()
     end
   end
 
@@ -69,12 +73,7 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
             }
         end
 
-      public_player = %PublicPlayerState{
-        id: player_id,
-        player_info: player_info
-      }
-
-      %{state | players: Map.put(state.players, player_id, public_player)}
+      %{state | players: Map.put(state.players, player_id, player_info)}
     end)
   end
 
@@ -94,14 +93,22 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
-  def handle_event(_pid, %Event.RolesDealt{} = _event) do
-    :ok
+  def handle_event(pid, %Event.RolesDealt{roles: roles} = _event) do
+    Agent.update(pid, fn state ->
+      roles =
+        Enum.map(roles, fn
+          {player_id, "adventurer"} -> {player_id, :adventurer}
+          {player_id, "guardian"} -> {player_id, :guardian}
+        end)
+        |> Map.new()
+
+      %{state | roles: roles}
+    end)
   end
 
   def handle_event(pid, %Event.ReceivedKey{player_id: player_id} = _event) do
     Agent.update(pid, fn state ->
-      players = Map.update!(state.players, player_id, fn player -> %{player | has_key: true} end)
-      %{state | player_with_key: player_id, players: players}
+      %{state | player_with_key: player_id}
     end)
   end
 
@@ -117,14 +124,18 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
   def handle_event(pid, %Event.RoomsDealt{rooms: rooms} = _event) do
     Agent.update(pid, fn state ->
-      players =
-        Enum.map(state.players, fn {player_id, %PublicPlayerState{} = player_state} ->
-          rooms = Map.fetch!(rooms, player_id) |> Enum.map(fn _ -> :closed end)
-          {player_id, %{player_state | rooms: rooms}}
+      rooms =
+        Enum.map(rooms, fn {player_id, rooms} ->
+          {player_id,
+           Enum.map(rooms, fn
+             "treasure" -> {:treasure, :closed}
+             "empty" -> {:empty, :closed}
+             "trap" -> {:trap, :closed}
+           end)}
         end)
         |> Map.new()
 
-      %{state | players: players}
+      %{state | rooms: rooms}
     end)
   end
 
@@ -134,17 +145,65 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
     end)
   end
 
-  def get(game_id, player_id),
-    do:
+  def get(game_id, player_id) do
+    state =
       Agent.get(pid(game_id), fn %Game.State{} = state ->
-        {state, calculate_player_state(state, player_id)}
+        state
       end)
 
-  defp calculate_player_state(%Game.State{} = state, player_id) do
-    %PlayerState{
-      id: player_id,
+    {state_of_players, private} =
+      if state.status == :playing and Map.has_key?(state.players, player_id) do
+        {Enum.map(Map.keys(state.players), fn player_id ->
+           calculate_player_state(state, player_id)
+         end), calculate_private(state, player_id)}
+      else
+        {nil, nil}
+      end
+
+    %{
+      game_id: game_id,
+      name: state.name,
+      status: state.status,
+      accepting_players: state.accepting_players,
+      current_round: state.current_round,
+      joined_players: state.players,
       allowed_actions: allowed_actions(state, player_id),
-      joined: Map.has_key?(state.players, player_id)
+      state_of_players: state_of_players,
+      private: private
+    }
+  end
+
+  defp calculate_private(%Game.State{} = state, player_id) do
+    {treasures, traps, empties} =
+      Map.get(state.rooms, player_id, [])
+      |> Enum.reduce({0, 0, 0}, fn
+        {:treasure, _}, {treasures, traps, empties} -> {treasures + 1, traps, empties}
+        {:trap, _}, {treasures, traps, empties} -> {treasures, traps + 1, empties}
+        {:empty, _}, {treasures, traps, empties} -> {treasures, traps, empties + 1}
+      end)
+
+    %PrivatePlayerState{
+      id: player_id,
+      role: Map.get(state.roles, player_id, nil),
+      treasures: treasures,
+      traps: traps,
+      empties: empties,
+      can_open_room: player_id == state.player_with_key
+    }
+  end
+
+  defp calculate_player_state(state, player_id) do
+    rooms =
+      Map.get(state.rooms, player_id, [])
+      |> Enum.map(fn
+        {_, :closed} -> :closed
+        {room, :open} -> room
+      end)
+
+    %PublicPlayerState{
+      id: player_id,
+      has_key: player_id == state.player_with_key,
+      rooms: rooms
     }
   end
 
@@ -165,9 +224,6 @@ defmodule BoardGames.TempelDesSchreckens.ReadModel.Game.State do
 
         status == :playing && state.current_round == nil ->
           []
-
-        status == :playing && player_id == state.player_with_key ->
-          [:open_room]
 
         true ->
           []
