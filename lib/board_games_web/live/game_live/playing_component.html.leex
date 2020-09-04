@@ -1,6 +1,35 @@
 <ul class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
-  <%= for player <- @players do %>
-    <li class="col-span-1 flex flex-col text-center bg-white rounded-lg shadow">
+  <li class="col-span-1 flex flex-col bg-white rounded-lg shadow">
+    <div class="border-b border-gray-200 flex flex-1 p-4 justify-start align-top">
+      <div class="relative">
+        <img class="w-32 h-32 object-cover flex-shrink-0 bg-black rounded-md" src="<%= @me.role.picture_url %>" alt="">
+        <%= if @me.has_key do %>
+        <img class="absolute w-16 h-16 bottom-0 right-0 -m-2" src="/images/key_circle.png" alt="">
+        <% end %>
+      </div>
+      <div class="pl-4">
+      <h3 class="text-gray-900 text-md leading-5 font-medium"><%= @me.name %></h3>
+      <p class="text-indigo-600"><%= @me.role.name %></p>
+      <div class="text-md leading-7">
+        <p class="text-gray-500">Treasures: <%= @me.treasures %></p>
+        <p class="text-gray-500">Traps: <%= @me.traps %></p>
+        <p class="text-gray-500">Empty rooms: <%= @me.empties %></p>
+      </div>
+      </div>
+    </div>
+
+
+    <div class="flex-1 flex flex-col">
+      <div class="mt-1 p-4 flex-none grid grid-cols-3 gap-1 grid-flow-row-dense">
+        <%= for room <- @me.rooms do %>
+          <img src="<%= room.image_url %>" alt="<%= room.alt_text %>">
+        <% end %>
+      </div>
+    </div>
+  </li>
+
+  <%= for player <- @other_players do %>
+    <li class="col-span-1 flex flex-col bg-white rounded-lg shadow">
       <div class="border-b border-gray-200 flex flex-1 p-4 justify-start align-top">
         <div class="relative">
           <img class="w-32 h-32 flex-shrink-0 bg-black rounded-md" src="<%= player.picture_url %>" alt="">

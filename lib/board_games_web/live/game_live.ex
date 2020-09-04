@@ -129,6 +129,8 @@ defmodule BoardGamesWeb.GameLive do
 
     joined = Map.has_key?(state.joined_players, player_id)
     players = translate_players(state.joined_players, state.state_of_players)
+    me = me(players, player_id, state.private)
+    other_players = Enum.reject(players, &match?(%{id: ^player_id}, &1))
 
     socket
     |> assign(
@@ -138,8 +140,27 @@ defmodule BoardGamesWeb.GameLive do
       players: players,
       player_id: player_id,
       subtitle: subtitle(joined, state.status, state.accepting_players),
-      allowed_actions: translate_allowed_actions(state.allowed_actions)
+      allowed_actions: translate_allowed_actions(state.allowed_actions),
+      me: me,
+      other_players: other_players
     )
+  end
+
+  defp me(players, player_id, nil) do
+    Enum.find(players, fn
+      %{id: ^player_id} -> true
+      _ -> false
+    end)
+  end
+
+  defp me(players, player_id, private) do
+    me =
+      Enum.find(players, fn
+        %{id: ^player_id} -> true
+        _ -> false
+      end)
+
+    %{Map.merge(me, private) | role: map_role(private.role)}
   end
 
   defp translate_players(players, state_of_players) do
@@ -176,4 +197,16 @@ defmodule BoardGamesWeb.GameLive do
             alt_text: "Closed Room"
           }
       end)
+
+  defp map_role(:adventurer),
+    do: %{
+      name: "Adventurer",
+      picture_url: "/images/adventurer.png"
+    }
+
+  defp map_role(:guardian),
+    do: %{
+      name: "Guardian",
+      picture_url: "/images/guardian.png"
+    }
 end

@@ -38,7 +38,7 @@
   <div class="mx-auto py-12 px-4 max-w-screen-xl sm:px-6 lg:px-8 lg:py-24">
 
   <%= if  @status == :playing do%>
-    <%= live_component @socket, BoardGamesWeb.GameLive.PlayingComponent, players: @players %>
+    <%= live_component @socket, BoardGamesWeb.GameLive.PlayingComponent, players: @players, me: @me, other_players: @other_players %>
   <% else %>
   <div class="bg-white">
     <div class="mx-auto py-12 px-4 max-w-screen-xl sm:px-6 lg:px-8 lg:py-24">
